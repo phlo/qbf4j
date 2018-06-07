@@ -1,9 +1,10 @@
-package at.jku.fmv.qcir;
+package at.jku.fmv.qbf;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public abstract class QBF {
 
@@ -149,8 +150,6 @@ public abstract class QBF {
 		public Exists(QBF subformula, String... variables) { this(subformula, Arrays.asList(variables)); }
 	}
 
-	// TODO: static method for parsing a QCIR file
-
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (!(o instanceof QBF)) return false;
@@ -200,6 +199,23 @@ public abstract class QBF {
 		);
 	}
 
+	public enum Traverse { PreOrder, PostOrder };
+	public Stream<QBF> stream(Traverse traversal) {
+		Stream<QBF> childStream =
+			this.apply(
+				(Literal lit) -> Stream.empty(),
+				(Not not) -> not.subformula.stream(traversal),
+				(And and) -> and.subformulas.stream().flatMap(f -> f.stream(traversal)),
+				(Or or) -> or.subformulas.stream().flatMap(f -> f.stream(traversal)),
+				(ForAll forall) -> forall.subformula.stream(traversal),
+				(Exists exists) -> exists.subformula.stream(traversal));
+
+		return
+			traversal == Traverse.PreOrder ?
+				Stream.concat(Stream.of(this), childStream) :
+				Stream.concat(childStream, Stream.of(this));
+	}
+
 	public QBF toNNF() {
 		return this.apply(
 			(Literal lit) -> lit,
@@ -223,8 +239,8 @@ public abstract class QBF {
 				(ForAll forall) -> new Exists(forall.subformula.negate().toNNF(), forall.variables),
 				(Exists exists) -> new ForAll(exists.subformula.negate().toNNF(), exists.variables)
 			),
-			(And and) -> new And(and.subformulas.stream().map(f -> f.toNNF()).collect(Collectors.toList())),
-			(Or or) -> new Or(or.subformulas.stream().map(f -> f.toNNF()).collect(Collectors.toList())),
+			(And and) -> new And(and.subformulas.stream().map(QBF::toNNF).collect(Collectors.toList())),
+			(Or or) -> new Or(or.subformulas.stream().map(QBF::toNNF).collect(Collectors.toList())),
 			(ForAll forall) -> new ForAll(forall.subformula.toNNF(), forall.variables),
 			(Exists exists) -> new Exists(exists.subformula.toNNF(), exists.variables)
 		);
@@ -241,8 +257,8 @@ public abstract class QBF {
 				(ForAll forall) -> new Exists(forall.subformula.negate(), forall.variables),
 				(Exists exists) -> new ForAll(exists.subformula.negate(), exists.variables)
 			),
-			(And and) -> new And(and.subformulas.stream().map(f -> f.toNNF()).collect(Collectors.toList())),
-			(Or or) -> new Or(or.subformulas.stream().map(f -> f.toNNF()).collect(Collectors.toList())),
+			(And and) -> new And(and.subformulas.stream().map(QBF::toNNF).collect(Collectors.toList())),
+			(Or or) -> new Or(or.subformulas.stream().map(QBF::toNNF).collect(Collectors.toList())),
 			(ForAll forall) -> new Not(forall),
 			(Exists exists) -> new Not(exists)
 		);
@@ -267,29 +283,21 @@ public abstract class QBF {
 				"(" +
 				and.subformulas
 					.stream()
-					.map(f -> f.toString())
+					.map(QBF::toString)
 					.collect(Collectors.joining(" ∧ ")) +
 				")",
 			(Or or) ->
 				"(" +
 				or.subformulas
 					.stream()
-					.map(f -> f.toString())
+					.map(QBF::toString)
 					.collect(Collectors.joining(" ∨ ")) +
 				")",
 			(ForAll forall) ->
-				"∀ " +
-				forall.variables
-					.stream()
-					.map(f -> f.toString())
-					.collect(Collectors.joining(", ")) +
+				"∀ " + forall.variables.stream().collect(Collectors.joining(", ")) +
 				": " + forall.subformula.toString(),
 			(Exists exists) ->
-				"∃ " +
-				exists.variables
-					.stream()
-					.map(f -> f.toString())
-					.collect(Collectors.joining(", ")) +
+				"∃ " + exists.variables.stream().collect(Collectors.joining(", ")) +
 				": " + exists.subformula.toString()
 		);
 	}

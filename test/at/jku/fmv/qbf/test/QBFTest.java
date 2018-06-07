@@ -1,9 +1,8 @@
-package at.jku.fmv.qcir.test;
+package at.jku.fmv.qbf.test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
@@ -11,8 +10,8 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import at.jku.fmv.qcir.QBF;
-import at.jku.fmv.qcir.QBF.*;
+import at.jku.fmv.qbf.QBF;
+import at.jku.fmv.qbf.QBF.*;
 
 @DisplayName("QBF")
 class QBFTest {
@@ -93,42 +92,42 @@ class QBFTest {
 		QBF exists = new Exists(forall, x1);
 
 		// Literal
-		assertTrue(lit.equals(new Literal(x1)));
-		assertFalse(lit.equals(new Literal(x2)));
-		assertFalse(lit.equals(and));
+		assertEquals(lit, new Literal(x1));
+		assertNotEquals(lit, new Literal(x2));
+		assertNotEquals(lit, and);
 
 		// Not
-		assertTrue(not.equals(new Not(new Or(new Literal(x1), new Literal(x2), new Literal(x3)))));
-		assertFalse(not.equals(new Not(lit)));
-		assertFalse(not.equals(and));
+		assertEquals(not, new Not(new Or(new Literal(x1), new Literal(x2), new Literal(x3))));
+		assertNotEquals(not, new Not(lit));
+		assertNotEquals(not, and);
 
 		// And
-		assertTrue(and.equals(new And(new Literal(x1), new Literal(x2), new Literal(x3))));
-		assertFalse(and.equals(new And(new Literal(x1), new Literal(x2))));
-		assertFalse(and.equals(or));
+		assertEquals(and, new And(new Literal(x1), new Literal(x2), new Literal(x3)));
+		assertNotEquals(and, new And(new Literal(x1), new Literal(x2)));
+		assertNotEquals(and, or);
 
 		// Or
-		assertTrue(or.equals(new Or(new Literal(x1), new Literal(x2), new Literal(x3))));
-		assertFalse(or.equals(new Or(new Literal(x1), new Literal(x2))));
-		assertFalse(or.equals(and));
+		assertEquals(or, new Or(new Literal(x1), new Literal(x2), new Literal(x3)));
+		assertNotEquals(or, new Or(new Literal(x1), new Literal(x2)));
+		assertNotEquals(or, and);
 
 		// ForAll
-		assertTrue(forall.equals(new ForAll(new Not(new Or(new Literal(x1), new Literal(x2), new Literal(x3))), x2)));
-		assertFalse(forall.equals(new ForAll(new Not(and), x1)));
-		assertFalse(forall.equals(new ForAll(not, x1)));
-		assertFalse(forall.equals(and));
+		assertEquals(forall, new ForAll(new Not(new Or(new Literal(x1), new Literal(x2), new Literal(x3))), x2));
+		assertNotEquals(forall, new ForAll(new Not(and), x1));
+		assertNotEquals(forall, new ForAll(not, x1));
+		assertNotEquals(forall, and);
 
 		// Exists
-		assertTrue(
-			exists.equals(
-				new Exists(
-					new ForAll(
-						new Not(new Or(new Literal(x1), new Literal(x2), new Literal(x3))),
-						x2),
-					x1)));
-		assertFalse(exists.equals(new Exists(new Not(and), x1)));
-		assertFalse(exists.equals(new Exists(not, x2)));
-		assertFalse(exists.equals(and));
+		assertEquals(
+			exists,
+			new Exists(
+				new ForAll(
+					new Not(new Or(new Literal(x1), new Literal(x2), new Literal(x3))),
+					x2),
+				x1));
+		assertNotEquals(exists, new Exists(new Not(and), x1));
+		assertNotEquals(exists, new Exists(not, x2));
+		assertNotEquals(exists, and);
 	}
 
 	@Test
@@ -189,10 +188,10 @@ class QBFTest {
 		assertEquals(forall.toNNF(), new Exists(new And(new Literal(x1), new Literal(x2)), x1, x2));
 		assertEquals(
 			exists.toNNF(),
+			new ForAll(
 				new ForAll(
-					new ForAll(
-						new Or(new Not(new Literal(x1)), new Not(new Literal(x2))),
-						x1, x2),
-					x3));
+					new Or(new Not(new Literal(x1)), new Not(new Literal(x2))),
+					x1, x2),
+				x3));
 	}
 }
