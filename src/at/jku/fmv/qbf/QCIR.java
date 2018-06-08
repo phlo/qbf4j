@@ -55,8 +55,16 @@ public final class QCIR {
 			String[] l = str.split("[()]");
 			String op = l[0].trim().toLowerCase();
 			switch (op) {
-				case "or": return new Or(parseOperands.apply(l[1]));
-				case "and": return new And(parseOperands.apply(l[1]));
+				case "and":
+					List<QBF> operands = parseOperands.apply(l[1]);
+					return operands.size() > 1 ?
+						new And(parseOperands.apply(l[1])) :
+						operands.isEmpty() ? QBF.True : operands.get(0);
+				case "or":
+					operands = parseOperands.apply(l[1]);
+					return operands.size() > 1 ?
+						new Or(parseOperands.apply(l[1])) :
+						operands.isEmpty() ? QBF.False : operands.get(0);
 				case "forall":
 					l = l[1].split(";");
 					return
@@ -82,7 +90,8 @@ public final class QCIR {
 				subformulas.put(id, parseGate.apply(l[1], null));
 			}
 			catch (IllegalArgumentException e) {
-				throw new IllegalArgumentException(fileName + ":" + lines.indexOf(line) + ": error: " + e.getMessage());
+				throw new IllegalArgumentException(
+					fileName + ":" + (lines.indexOf(line) + 1) + ": error: " + e.getMessage());
 			}
 		};
 
