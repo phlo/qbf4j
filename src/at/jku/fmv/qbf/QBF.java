@@ -8,28 +8,52 @@ import java.util.stream.Stream;
 
 public abstract class QBF {
 
+	public static QBF True = new True();
+	public static QBF False = new False();
+
 	private QBF() {}
 
-	public abstract <T> T apply(Function<Literal, T> lit,
+	public abstract <T> T apply(Function<True, T> t,
+								Function<False, T> f,
+								Function<Literal, T> lit,
 								Function<Not, T> not,
 								Function<And, T> and,
 								Function<Or, T> or,
 								Function<ForAll, T> forall,
 								Function<Exists, T> exists);
 
-//	public static final class Variable {
-//		public final String name;
-//		public Variable(String name) { this.name = name; }
-//
-//		public String toString() {
-//			return name;
-//		}
-//	}
+	public static final class True extends QBF {
+		public <T> T apply(	Function<True, T> t,
+							Function<False, T> f,
+							Function<Literal, T> lit,
+							Function<Not, T> not,
+							Function<And, T> and,
+							Function<Or, T> or,
+							Function<ForAll, T> forall,
+							Function<Exists, T> exists ) { return t.apply(this); }
+
+		private True() {}
+	}
+
+	public static final class False extends QBF {
+		public <T> T apply(	Function<True, T> t,
+							Function<False, T> f,
+							Function<Literal, T> lit,
+							Function<Not, T> not,
+							Function<And, T> and,
+							Function<Or, T> or,
+							Function<ForAll, T> forall,
+							Function<Exists, T> exists ) { return f.apply(this); }
+
+		private False() {}
+	}
 
 	public static final class Literal extends QBF {
 		public final String variable;
 
-		public <T> T apply(	Function<Literal, T> lit,
+		public <T> T apply(	Function<True, T> t,
+							Function<False, T> f,
+							Function<Literal, T> lit,
 							Function<Not, T> not,
 							Function<And, T> and,
 							Function<Or, T> or,
@@ -47,7 +71,9 @@ public abstract class QBF {
 	public static final class Not extends QBF {
 		public final QBF subformula;
 
-		public <T> T apply(	Function<Literal, T> lit,
+		public <T> T apply(	Function<True, T> t,
+							Function<False, T> f,
+							Function<Literal, T> lit,
 							Function<Not, T> not,
 							Function<And, T> and,
 							Function<Or, T> or,
@@ -65,7 +91,9 @@ public abstract class QBF {
 	public static final class And extends QBF {
 		public final List<QBF> subformulas;
 
-		public <T> T apply(	Function<Literal, T> lit,
+		public <T> T apply(	Function<True, T> t,
+							Function<False, T> f,
+							Function<Literal, T> lit,
 							Function<Not, T> not,
 							Function<And, T> and,
 							Function<Or, T> or,
@@ -85,7 +113,9 @@ public abstract class QBF {
 	public static final class Or extends QBF {
 		public final List<QBF> subformulas;
 
-		public <T> T apply(	Function<Literal, T> lit,
+		public <T> T apply(	Function<True, T> t,
+							Function<False, T> f,
+							Function<Literal, T> lit,
 							Function<Not, T> not,
 							Function<And, T> and,
 							Function<Or, T> or,
@@ -106,7 +136,9 @@ public abstract class QBF {
 		public final QBF subformula;
 		public final List<String> variables;
 
-		public <T> T apply(	Function<Literal, T> lit,
+		public <T> T apply(	Function<True, T> t,
+							Function<False, T> f,
+							Function<Literal, T> lit,
 							Function<Not, T> not,
 							Function<And, T> and,
 							Function<Or, T> or,
@@ -130,7 +162,9 @@ public abstract class QBF {
 		public final QBF subformula;
 		public final List<String> variables;
 
-		public <T> T apply(	Function<Literal, T> lit,
+		public <T> T apply(	Function<True, T> t,
+							Function<False, T> f,
+							Function<Literal, T> lit,
 							Function<Not, T> not,
 							Function<And, T> and,
 							Function<Or, T> or,
@@ -156,6 +190,8 @@ public abstract class QBF {
 
 		final QBF other = (QBF) o;
 
+		Function<True, Boolean> noTrue = x -> false;
+		Function<False, Boolean> noFalse = x -> false;
 		Function<Literal, Boolean> noLiteral = x -> false;
 		Function<Not, Boolean> noNot = x -> false;
 		Function<And, Boolean> noAnd = x -> false;
@@ -164,35 +200,38 @@ public abstract class QBF {
 		Function<Exists, Boolean> noExists = x -> false;
 
 		return this.apply(
+			(True t) -> t == True,
+			(False f) -> f == False,
 			(Literal lit1) ->
 				other.apply(
+					noTrue, noFalse,
 					(Literal lit2) -> lit1.variable.equals(lit2.variable),
 					noNot, noAnd, noOr, noForall, noExists),
 			(Not not1) ->
 				other.apply(
-					noLiteral,
+					noTrue, noFalse, noLiteral,
 					(Not not2) -> not1.subformula.equals(not2.subformula),
 					noAnd, noOr, noForall, noExists),
 			(And and1) ->
 				other.apply(
-					noLiteral, noNot,
+					noTrue, noFalse, noLiteral, noNot,
 					(And and2) -> and1.subformulas.equals(and2.subformulas),
 					noOr, noForall, noExists),
 			(Or or1) ->
 				other.apply(
-					noLiteral, noNot, noAnd,
+					noTrue, noFalse, noLiteral, noNot, noAnd,
 					(Or or2) -> or1.subformulas.equals(or2.subformulas),
 					noForall, noExists),
 			(ForAll forall1) ->
 				other.apply(
-					noLiteral, noNot, noAnd, noOr,
+					noTrue, noFalse, noLiteral, noNot, noAnd, noOr,
 					(ForAll forall2) ->
 						forall1.variables.equals(forall2.variables) &&
 						forall1.subformula.equals(forall2.subformula),
 					noExists),
 			(Exists exists1) ->
 				other.apply(
-					noLiteral, noNot, noAnd, noOr, noForall,
+					noTrue, noFalse, noLiteral, noNot, noAnd, noOr, noForall,
 					(Exists exists2) ->
 						exists1.variables.equals(exists2.variables) &&
 						exists1.subformula.equals(exists2.subformula))
@@ -203,6 +242,8 @@ public abstract class QBF {
 	public Stream<QBF> stream(Traverse traversal) {
 		Stream<QBF> childStream =
 			this.apply(
+				(True t) -> Stream.empty(),
+				(False f) -> Stream.empty(),
 				(Literal lit) -> Stream.empty(),
 				(Not not) -> not.subformula.stream(traversal),
 				(And and) -> and.subformulas.stream().flatMap(f -> f.stream(traversal)),
@@ -216,10 +257,27 @@ public abstract class QBF {
 				Stream.concat(childStream, Stream.of(this));
 	}
 
+	public QBF negate() {
+		return this.apply(
+			(True t) -> False,
+			(False f) -> True,
+			(Literal lit) -> new Not(lit),
+			(Not not) -> not.subformula,
+			(And and) -> new Not(and),
+			(Or or) -> new Not(or),
+			(ForAll forall) -> new Not(forall),
+			(Exists exists) -> new Not(exists)
+		);
+	}
+
 	public QBF toNNF() {
 		return this.apply(
+			(True t) -> t,
+			(False f) -> f,
 			(Literal lit) -> lit,
 			(Not not) -> not.subformula.apply(
+				(True t) -> False,
+				(False f) -> True,
 				(Literal lit) -> not,
 				(Not impossible) -> not,
 				(And and) ->
@@ -247,36 +305,13 @@ public abstract class QBF {
 	}
 
 	public QBF toPNF() {
-		return this.apply(
-			(Literal lit) -> lit,
-			(Not not) -> not.subformula.apply(
-				(Literal lit) -> not,
-				(Not notpossible) -> notpossible,
-				(And and) -> and.toPNF(),
-				(Or or) -> or.toPNF(),
-				(ForAll forall) -> new Exists(forall.subformula.negate(), forall.variables),
-				(Exists exists) -> new ForAll(exists.subformula.negate(), exists.variables)
-			),
-			(And and) -> new And(and.subformulas.stream().map(QBF::toNNF).collect(Collectors.toList())),
-			(Or or) -> new Or(or.subformulas.stream().map(QBF::toNNF).collect(Collectors.toList())),
-			(ForAll forall) -> new Not(forall),
-			(Exists exists) -> new Not(exists)
-		);
-	}
-
-	public QBF negate() {
-		return this.apply(
-			(Literal lit) -> new Not(lit),
-			(Not not) -> not.subformula,
-			(And and) -> new Not(and),
-			(Or or) -> new Not(or),
-			(ForAll forall) -> new Not(forall),
-			(Exists exists) -> new Not(exists)
-		);
+		return null;
 	}
 
 	public String toString() {
 		return this.apply(
+			(True t) -> "TRUE",
+			(False f) -> "FALSE",
 			(Literal lit) -> lit.variable.toString(),
 			(Not not) -> "-" + not.subformula.toString(),
 			(And and) ->

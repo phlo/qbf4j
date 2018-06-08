@@ -4,11 +4,12 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.util.Arrays;
-import java.util.List;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import at.jku.fmv.qbf.QBF;
 import at.jku.fmv.qbf.QBF.*;
@@ -21,29 +22,6 @@ class QBFTest {
 	static final String x2 = "x2";
 	static final String x3 = "x3";
 	static final String x4 = "x4";
-
-//	// And
-//	static final QBF fAnd12 = new And(new Literal(x1), new Literal(x2));
-//	static final QBF fAnd23 = new And(new Literal(x2), new Literal(x3));
-//	static final QBF fAnd123 = new And(new Literal(x1), new Literal(x2), new Literal(x3));
-//	// Or
-//	static final QBF fOr12 = new Or(new Literal(x1), new Literal(x2));
-//	static final QBF fOr23 = new Or(new Literal(x2), new Literal(x3));
-//	static final QBF fOr123 = new Or(new Literal(x1), new Literal(x2), new Literal(x3));
-//	// ForAll
-//	static final QBF fForAll12And12 = new ForAll(fAnd12, x1, x2);
-//	static final QBF fForAll23And23 = new ForAll(fAnd23, x2, x3);
-//
-//	// Exists
-//	static final QBF fExists12And12 = new Exists(fAnd12, x1, x2);
-//	static final QBF fExists23And23 = new Exists(fAnd23, x2, x3);
-//
-//	// combinations
-//	static final QBF fExists1ForAll23OrAnd12And23 = new Exists(new ForAll(new Or(fAnd12, fAnd23), x2, x3), x1);
-
-//	@BeforeAll
-//	static void initAll() {
-//	}
 
 	@Test
 	@DisplayName("illegal construction")
@@ -131,22 +109,56 @@ class QBFTest {
 	}
 
 	@Test
-	@DisplayName("toString")
-	void test_toString() {
-		QBF and = new And(new Literal(x1), new Literal(x2), new Literal (x3));
-		QBF or = new Or(new Not(new Literal(x1)), and);
-		QBF forall = new ForAll(or, x1, x2);
-		QBF exists = new Exists(forall, x3);
+	@DisplayName("stream")
+	void test_stream() {
+		QBF lit1 = new Literal(x1);
+		QBF lit2 = new Literal(x2);
+		QBF lit3 = new Literal(x3);
+		QBF and = new And(new Literal(x1), new Literal(x2), new Literal(x3), QBF.True);
+		QBF or = new Or(new Literal(x1), new Literal(x2), new Literal(x3), QBF.False);
+		QBF not = new Not(or);
+		QBF forall = new ForAll(not, x2);
+		QBF exists = new Exists(forall, x1);
 
-//		System.out.println(t1.toString());
-//		System.out.println(t2.toString());
-//		System.out.println(t3.toString());
-//		System.out.println(t4.toString());
+		// pre-order
+		assertEquals(
+			lit1.stream(Traverse.PreOrder).collect(Collectors.toList()),
+			Arrays.asList(lit1));
+		assertEquals(
+			and.stream(Traverse.PreOrder).collect(Collectors.toList()),
+			Arrays.asList(and, lit1, lit2, lit3, QBF.True));
+		assertEquals(
+			or.stream(Traverse.PreOrder).collect(Collectors.toList()),
+			Arrays.asList(or, lit1, lit2, lit3, QBF.False));
+		assertEquals(
+			not.stream(Traverse.PreOrder).collect(Collectors.toList()),
+			Arrays.asList(not, or, lit1, lit2, lit3, QBF.False));
+		assertEquals(
+			forall.stream(Traverse.PreOrder).collect(Collectors.toList()),
+			Arrays.asList(forall, not, or, lit1, lit2, lit3, QBF.False));
+		assertEquals(
+			exists.stream(Traverse.PreOrder).collect(Collectors.toList()),
+			Arrays.asList(exists, forall, not, or, lit1, lit2, lit3, QBF.False));
 
-		assertEquals("(x1 ∧ x2 ∧ x3)", and.toString());
-		assertEquals("(-x1 ∨ (x1 ∧ x2 ∧ x3))", or.toString());
-		assertEquals("∀ x1, x2: (-x1 ∨ (x1 ∧ x2 ∧ x3))", forall.toString());
-		assertEquals("∃ x3: ∀ x1, x2: (-x1 ∨ (x1 ∧ x2 ∧ x3))", exists.toString());
+		// post-order
+		assertEquals(
+			lit1.stream(Traverse.PostOrder).collect(Collectors.toList()),
+			Arrays.asList(lit1));
+		assertEquals(
+			and.stream(Traverse.PostOrder).collect(Collectors.toList()),
+			Arrays.asList(lit1, lit2, lit3, QBF.True, and));
+		assertEquals(
+			or.stream(Traverse.PostOrder).collect(Collectors.toList()),
+			Arrays.asList(lit1, lit2, lit3, QBF.False, or));
+		assertEquals(
+			not.stream(Traverse.PostOrder).collect(Collectors.toList()),
+			Arrays.asList(lit1, lit2, lit3, QBF.False, or, not));
+		assertEquals(
+			forall.stream(Traverse.PostOrder).collect(Collectors.toList()),
+			Arrays.asList(lit1, lit2, lit3, QBF.False, or, not, forall));
+		assertEquals(
+			exists.stream(Traverse.PostOrder).collect(Collectors.toList()),
+			Arrays.asList(lit1, lit2, lit3, QBF.False, or, not, forall, exists));
 	}
 
 	@Test
@@ -159,6 +171,8 @@ class QBFTest {
 		QBF forall = new ForAll(and, x1, x2);
 		QBF exists = new Exists(or, x3);
 
+		assertEquals(QBF.True.negate(), QBF.False);
+		assertEquals(QBF.False.negate(), QBF.True);
 		assertEquals(lit.negate(), not);
 		assertEquals(not.negate(), lit);
 		assertEquals(and.negate(), new Not(and));
@@ -171,8 +185,8 @@ class QBFTest {
 	@DisplayName("toNNF")
 	void test_toNNF() {
 		QBF lit = new Not(new Literal(x1));
-		QBF and = new Not(new And(new Literal(x1), new Literal(x2)));
-		QBF or = new Not(new Or(lit, new Not(new Literal(x2))));
+		QBF and = new Not(new And(new Literal(x1), new Literal(x2), QBF.True));
+		QBF or = new Not(new Or(lit, new Not(new Literal(x2)), QBF.False));
 		QBF forall = new Not(new ForAll(and, x1, x2));
 		QBF exists = new Not(new Exists(forall, x3));
 
@@ -183,15 +197,31 @@ class QBFTest {
 //		System.out.println(exists.toString() + " == " + exists.toNNF().toString());
 
 		assertEquals(lit.toNNF(), new Not(new Literal(x1)));
-		assertEquals(and.toNNF(), new Or(new Not(new Literal(x1)), new Not(new Literal(x2))));
-		assertEquals(or.toNNF(), new And(new Literal(x1), new Literal(x2)));
-		assertEquals(forall.toNNF(), new Exists(new And(new Literal(x1), new Literal(x2)), x1, x2));
+		assertEquals(and.toNNF(), new Or(new Not(new Literal(x1)), new Not(new Literal(x2)), QBF.False));
+		assertEquals(or.toNNF(), new And(new Literal(x1), new Literal(x2), QBF.True));
+		assertEquals(forall.toNNF(), new Exists(new And(new Literal(x1), new Literal(x2), QBF.True), x1, x2));
 		assertEquals(
 			exists.toNNF(),
 			new ForAll(
 				new ForAll(
-					new Or(new Not(new Literal(x1)), new Not(new Literal(x2))),
+					new Or(new Not(new Literal(x1)), new Not(new Literal(x2)), QBF.False),
 					x1, x2),
 				x3));
+	}
+
+	@Test
+	@DisplayName("toString")
+	void test_toString() {
+		QBF and = new And(new Literal(x1), new Literal(x2), new Literal (x3));
+		QBF or = new Or(new Not(new Literal(x1)), and);
+		QBF forall = new ForAll(or, x1, x2);
+		QBF exists = new Exists(forall, x3);
+		QBF tautology = new Or(QBF.True, QBF.False);
+
+		assertEquals("(x1 ∧ x2 ∧ x3)", and.toString());
+		assertEquals("(-x1 ∨ (x1 ∧ x2 ∧ x3))", or.toString());
+		assertEquals("∀ x1, x2: (-x1 ∨ (x1 ∧ x2 ∧ x3))", forall.toString());
+		assertEquals("∃ x3: ∀ x1, x2: (-x1 ∨ (x1 ∧ x2 ∧ x3))", exists.toString());
+		assertEquals("(TRUE ∨ FALSE)", tautology.toString());
 	}
 }
