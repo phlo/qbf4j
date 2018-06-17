@@ -1,4 +1,4 @@
-package at.jku.fmv.qbf;
+package at.jku.fmv.qbf.io;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -13,6 +13,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import at.jku.fmv.qbf.QBF;
 import at.jku.fmv.qbf.QBF.*;
 
 /**
@@ -70,13 +71,13 @@ public final class QCIR {
 					return
 						new ForAll(
 							sub == null ? parseOperands.apply(l[1]).get(0) : sub,
-							streamOperands.apply(l[0]).collect(Collectors.toList()));
+							streamOperands.apply(l[0]).collect(Collectors.toSet()));
 				case "exists":
 					l = l[1].split(";");
 					return
 						new Exists(
 							sub == null ? parseOperands.apply(l[1]).get(0) : sub,
-							streamOperands.apply(l[0]).collect(Collectors.toList()));
+							streamOperands.apply(l[0]).collect(Collectors.toSet()));
 				default:
 					throw new IllegalArgumentException("unknown gate type '" + op + "'");
 			}

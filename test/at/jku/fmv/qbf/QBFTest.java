@@ -1,4 +1,4 @@
-package at.jku.fmv.qbf.test;
+package at.jku.fmv.qbf;
 
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertEquals;
@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import at.jku.fmv.qbf.QBF;
@@ -25,7 +26,7 @@ class QBFTest {
 
 	@Test
 	@DisplayName("illegal construction")
-	void test_constructor() {
+	void test_illegalConstruction() {
 		Literal lit = new Literal(x1);
 
 		// Literal
@@ -48,15 +49,15 @@ class QBFTest {
 		assertThrows(IllegalArgumentException.class, () -> new Or());
 
 		// ForAll
-		List<String> variablesNull = null;
+		Set<String> variablesNull = null;
 		assertThrows(IllegalArgumentException.class, () -> new ForAll(null, variablesNull));
 		assertThrows(IllegalArgumentException.class, () -> new ForAll(lit, variablesNull));
-		assertThrows(IllegalArgumentException.class, () -> new ForAll(null, Arrays.asList(x1, x2)));
+		assertThrows(IllegalArgumentException.class, () -> new ForAll(null, x1, x2));
 
 		// ForAll
 		assertThrows(IllegalArgumentException.class, () -> new Exists(null, variablesNull));
 		assertThrows(IllegalArgumentException.class, () -> new Exists(lit, variablesNull));
-		assertThrows(IllegalArgumentException.class, () -> new Exists(null, Arrays.asList(x1, x2)));
+		assertThrows(IllegalArgumentException.class, () -> new Exists(null, x1, x2));
 	}
 
 	@Test

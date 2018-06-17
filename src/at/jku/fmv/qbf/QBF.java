@@ -1,11 +1,16 @@
 package at.jku.fmv.qbf;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import at.jku.fmv.qbf.prenexing.PrenexingStrategy;
+
+// TODO: add isForAll and isExists predicates?
 public abstract class QBF {
 
 	public static QBF True = new True();
@@ -22,6 +27,18 @@ public abstract class QBF {
 								Function<ForAll, T> forall,
 								Function<Exists, T> exists);
 
+	public <T> T apply(Function<ForAll, T> forall, Function<Exists, T> exists) {
+		return this.apply(
+			t -> { throw new IllegalArgumentException("not a quantifier"); },
+			f -> { throw new IllegalArgumentException("not a quantifier"); },
+			lit -> { throw new IllegalArgumentException("not a quantifier"); },
+			not -> { throw new IllegalArgumentException("not a quantifier"); },
+			and -> { throw new IllegalArgumentException("not a quantifier"); },
+			or -> { throw new IllegalArgumentException("not a quantifier"); },
+			forall,
+			exists);
+	}
+
 	public static final class True extends QBF {
 		public <T> T apply(	Function<True, T> t,
 							Function<False, T> f,
@@ -31,6 +48,7 @@ public abstract class QBF {
 							Function<Or, T> or,
 							Function<ForAll, T> forall,
 							Function<Exists, T> exists ) { return t.apply(this); }
+
 
 		private True() {}
 	}
@@ -134,7 +152,7 @@ public abstract class QBF {
 
 	public static final class ForAll extends QBF {
 		public final QBF subformula;
-		public final List<String> variables;
+		public final Set<String> variables;
 
 		public <T> T apply(	Function<True, T> t,
 							Function<False, T> f,
@@ -145,7 +163,7 @@ public abstract class QBF {
 							Function<ForAll, T> forall,
 							Function<Exists, T> exists ) { return forall.apply(this); }
 
-		public ForAll(QBF subformula, List<String> variables) {
+		public ForAll(QBF subformula, Set<String> variables) {
 			if (subformula == null)
 				throw new IllegalArgumentException("missing subformula");
 			if (variables == null || variables.isEmpty())
@@ -155,12 +173,14 @@ public abstract class QBF {
 			this.variables = variables;
 		}
 
-		public ForAll(QBF subformula, String... variables) { this(subformula, Arrays.asList(variables)); }
+		public ForAll(QBF subformula, String... variables) {
+			this(subformula, new HashSet<String>(Arrays.asList(variables)));
+		}
 	}
 
 	public static final class Exists extends QBF {
 		public final QBF subformula;
-		public final List<String> variables;
+		public final Set<String> variables;
 
 		public <T> T apply(	Function<True, T> t,
 							Function<False, T> f,
@@ -171,7 +191,7 @@ public abstract class QBF {
 							Function<ForAll, T> forall,
 							Function<Exists, T> exists ) { return exists.apply(this); }
 
-		public Exists(QBF subformula, List<String> variables) {
+		public Exists(QBF subformula, Set<String> variables) {
 			if (subformula == null)
 				throw new IllegalArgumentException("missing subformula");
 			if (variables == null || variables.isEmpty())
@@ -181,7 +201,9 @@ public abstract class QBF {
 			this.variables = variables;
 		}
 
-		public Exists(QBF subformula, String... variables) { this(subformula, Arrays.asList(variables)); }
+		public Exists(QBF subformula, String... variables) {
+			this(subformula, new HashSet<String>(Arrays.asList(variables)));
+		}
 	}
 
 	public boolean equals(Object o) {
@@ -304,8 +326,8 @@ public abstract class QBF {
 		);
 	}
 
-	public QBF toPNF() {
-		return null;
+	public QBF toPNF(PrenexingStrategy strategy) {
+		return strategy.apply(this.toNNF());
 	}
 
 	public String toString() {
@@ -329,10 +351,10 @@ public abstract class QBF {
 					.collect(Collectors.joining(" ∨ ")) +
 				")",
 			(ForAll forall) ->
-				"∀ " + forall.variables.stream().collect(Collectors.joining(", ")) +
+				"∀ " + forall.variables.stream().sorted().collect(Collectors.joining(", ")) +
 				": " + forall.subformula.toString(),
 			(Exists exists) ->
-				"∃ " + exists.variables.stream().collect(Collectors.joining(", ")) +
+				"∃ " + exists.variables.stream().sorted().collect(Collectors.joining(", ")) +
 				": " + exists.subformula.toString()
 		);
 	}
