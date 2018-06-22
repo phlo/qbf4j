@@ -1,8 +1,6 @@
 package at.jku.fmv.qbf;
 
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -10,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import at.jku.fmv.qbf.QBF;
@@ -23,6 +22,33 @@ class QBFTest {
 	static final String x2 = "x2";
 	static final String x3 = "x3";
 	static final String x4 = "x4";
+
+	// LNCS paper example: ∃p (∀q ∃r ∀s ∃t ϕ0 ∧ ∀q' ∃r' ϕ1 ∧ ¬∀q'' ∃r'' ϕ2)
+	static final QBF lncsExample =
+		new Exists(
+			new And(
+				new ForAll(
+					new Exists(
+						new ForAll(
+							new Exists(
+								new Literal("ϕ0"),
+								"t"),
+							"s"),
+						"r"),
+					"q"),
+				new ForAll(
+					new Exists(
+							new Literal("ϕ1"),
+						"r'"),
+					"q'"),
+				new Not(
+					new ForAll(
+						new Exists(
+							new Literal("ϕ2"),
+							"r''"),
+						"q''"))),
+			"p");
+	static final QBF lncsExampleNNF = lncsExample.toNNF();
 
 	@Test
 	@DisplayName("illegal construction")
@@ -163,6 +189,165 @@ class QBFTest {
 	}
 
 	@Test
+	@DisplayName("streamPrefix")
+	void test_streamPrefix() {
+		QBF sub1 = ((And) ((Exists) lncsExampleNNF).subformula).subformulas.get(0);
+		QBF sub2 = ((And) ((Exists) lncsExampleNNF).subformula).subformulas.get(1);
+		QBF sub3 = ((And) ((Exists) lncsExampleNNF).subformula).subformulas.get(2);
+
+		assertEquals(lncsExample.prefixToString(), "∃p");
+		assertEquals(sub1.prefixToString(), "∀q ∃r ∀s ∃t");
+		assertEquals(sub2.prefixToString(), "∀q' ∃r'");
+		assertEquals(sub3.prefixToString(), "∃q'' ∀r''");
+	}
+
+	@Test
+	@DisplayName("streamQPaths")
+	void test_streamQPaths() {
+		Function<QBF, List<String>> qpathsToString = f ->
+			f.streamQPaths()
+				.map(QBF::prefixToString)
+				.collect(Collectors.toList());
+
+		// LNCS paper example
+		List<String> qpaths = qpathsToString.apply(lncsExampleNNF);
+
+		assertEquals(3, qpaths.size());
+		assertEquals(qpaths.get(0), "∃p ∀q ∃r ∀s ∃t");
+		assertEquals(qpaths.get(1), "∃p ∀q' ∃r'");
+		assertEquals(qpaths.get(2), "∃p,q'' ∀r''");
+
+		And and = (And) ((Exists) lncsExampleNNF).subformula;
+		qpaths = qpathsToString.apply(and);
+
+		assertEquals(3, qpaths.size());
+		assertEquals(qpaths.get(0), "∀q ∃r ∀s ∃t");
+		assertEquals(qpaths.get(1), "∀q' ∃r'");
+		assertEquals(qpaths.get(2), "∃q'' ∀r''");
+
+		qpaths = and.subformulas.stream().flatMap(f -> qpathsToString.apply(f).stream()).collect(Collectors.toList());
+
+		assertEquals(3, qpaths.size());
+		assertEquals(qpaths.get(0), "∀q ∃r ∀s ∃t");
+		assertEquals(qpaths.get(1), "∀q' ∃r'");
+		assertEquals(qpaths.get(2), "∃q'' ∀r''");
+
+		// two different qpaths
+		QBF twoPaths =
+			new And(
+				new ForAll(new Exists(new Literal("x3"), "x2"), "x1"),
+				new Exists(new ForAll(new Literal("x6"), "x5"), "x4"));
+
+		qpaths = qpathsToString.apply(twoPaths);
+
+		assertEquals(2, qpaths.size());
+		assertEquals(qpaths.get(0), "∀x1 ∃x2");
+		assertEquals(qpaths.get(1), "∃x4 ∀x5");
+	}
+
+	@Test
+	@DisplayName("getCriticalPaths")
+	void test_getCriticalPaths() {
+		Function<List<QBF>, List<String>> criticalPathsToString = l ->
+			l.stream().map(QBF::prefixToString).collect(Collectors.toList());
+
+		// LNCS paper example
+		List<QBF> qpaths = lncsExampleNNF.getQPaths();
+
+		List<String> criticalPaths = criticalPathsToString.apply(QBF.getCriticalPaths(qpaths));
+
+		assertEquals(1, criticalPaths.size());
+		assertEquals("∃p ∀q ∃r ∀s ∃t", criticalPaths.get(0));
+
+		// two different qpaths
+		QBF twoPaths =
+			new And(
+				new ForAll(new Exists(new Literal("x3"), "x2"), "x1"),
+				new Exists(new ForAll(new Literal("x6"), "x5"), "x4"));
+
+		qpaths = twoPaths.getQPaths();
+
+		criticalPaths = criticalPathsToString.apply(QBF.getCriticalPaths(qpaths));
+
+		assertEquals(2, criticalPaths.size());
+		assertEquals("∀x1 ∃x4 ∀x5", criticalPaths.get(0));
+		assertEquals("∃x4 ∀x1 ∃x2", criticalPaths.get(1));
+
+		// three equal paths
+		QBF samePaths =
+			new And(
+				new ForAll(new Exists(new Literal("x3"), "x2"), "x1"),
+				new ForAll(new Exists(new Literal("x6"), "x5"), "x4"),
+				new ForAll(new Exists(new Literal("x9"), "x8"), "x7"));
+
+		qpaths = samePaths.getQPaths();
+
+		criticalPaths = criticalPathsToString.apply(QBF.getCriticalPaths(qpaths));
+
+		assertEquals(1, criticalPaths.size());
+		assertEquals("∀x1 ∃x2", criticalPaths.get(0));
+	}
+
+	@Test
+	@DisplayName("getSkeleton")
+	void test_getSkeleton() {
+		assertEquals("(ϕ0 ∧ ϕ1 ∧ -ϕ2)", lncsExample.getSkeleton().toString());
+		assertEquals("(ϕ0 ∧ ϕ1 ∧ -ϕ2)", lncsExampleNNF.getSkeleton().toString());
+
+		QBF qbf = new ForAll(new Exists(new Literal(x3), x2), x1);
+		assertEquals("x3", qbf.getSkeleton().toString());
+
+		qbf = new Not(qbf);
+		assertEquals("-x3", qbf.getSkeleton().toString());
+
+		qbf = new And(qbf.negate(), qbf);
+		assertEquals("(x3 ∧ -x3)", qbf.getSkeleton().toString());
+
+		qbf = new Or(qbf.negate(), qbf);
+		assertEquals("(-(x3 ∧ -x3) ∨ (x3 ∧ -x3))", qbf.getSkeleton().toString());
+
+		qbf = new Not(qbf);
+		assertEquals("-(-(x3 ∧ -x3) ∨ (x3 ∧ -x3))", qbf.getSkeleton().toString());
+	}
+
+	@Test
+	@DisplayName("unifyPrefix")
+	void test_unifyPrefix() {
+		QBF lit1 = new Literal(x1);
+		QBF lit2 = new Literal(x2);
+		QBF not = new Not(lit1);
+		QBF and = new And(not, lit2);
+		QBF or = new Or(lit1, and);
+		QBF forall1 = new ForAll(or, x2);
+		QBF forall2 = new ForAll(forall1, x1);
+		QBF exists1 = new Exists(or, x2);
+		QBF exists2 = new Exists(exists1, x1);
+
+		assertEquals(lit1, lit1.unifyPrefix());
+		assertEquals(not, not.unifyPrefix());
+		assertEquals(and, and.unifyPrefix());
+		assertEquals(or, or.unifyPrefix());
+		assertEquals(forall1, forall1.unifyPrefix());
+		assertEquals(new ForAll(or, x1, x2), forall2.unifyPrefix());
+		assertEquals(exists1, exists1.unifyPrefix());
+		assertEquals(new Exists(or, x1, x2), exists2.unifyPrefix());
+
+		QBF[][] triples = {
+			{ new ForAll(new ForAll(new ForAll(or, x3), x2), x1), new ForAll(or, x1, x2, x3) },
+			{ new ForAll(new ForAll(new Exists(or, x3), x2), x1), new ForAll(new Exists(or, x3), x1, x2) },
+			{ new ForAll(new Exists(new ForAll(or, x3), x2), x1), new ForAll(new Exists(new ForAll(or, x3), x2), x1) },
+			{ new ForAll(new Exists(new Exists(or, x3), x2), x1), new ForAll(new Exists(or, x2, x3), x1) },
+			{ new Exists(new ForAll(new ForAll(or, x3), x2), x1), new Exists(new ForAll(or, x2, x3), x1) },
+			{ new Exists(new ForAll(new Exists(or, x3), x2), x1), new Exists(new ForAll(new Exists(or, x3), x2), x1) },
+			{ new Exists(new Exists(new ForAll(or, x3), x2), x1), new Exists(new ForAll(or, x3), x1, x2) },
+			{ new Exists(new Exists(new Exists(or, x3), x2), x1), new Exists(or, x1, x2, x3) }
+		};
+
+		for(QBF[] t : triples)
+			assertEquals(t[1], t[0].unifyPrefix());
+	}
+
+	@Test
 	@DisplayName("negate")
 	void test_negate() {
 		QBF lit = new Literal(x1);
@@ -221,8 +406,8 @@ class QBFTest {
 
 		assertEquals("(x1 ∧ x2 ∧ x3)", and.toString());
 		assertEquals("(-x1 ∨ (x1 ∧ x2 ∧ x3))", or.toString());
-		assertEquals("∀ x1, x2: (-x1 ∨ (x1 ∧ x2 ∧ x3))", forall.toString());
-		assertEquals("∃ x3: ∀ x1, x2: (-x1 ∨ (x1 ∧ x2 ∧ x3))", exists.toString());
+		assertEquals("∀x1,x2: (-x1 ∨ (x1 ∧ x2 ∧ x3))", forall.toString());
+		assertEquals("∃x3: ∀x1,x2: (-x1 ∨ (x1 ∧ x2 ∧ x3))", exists.toString());
 		assertEquals("(TRUE ∨ FALSE)", tautology.toString());
 	}
 }
