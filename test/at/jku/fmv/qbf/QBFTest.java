@@ -6,10 +6,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import at.jku.fmv.qbf.QBF;
 import at.jku.fmv.qbf.QBF.*;
@@ -49,6 +52,10 @@ class QBFTest {
 						"q''"))),
 			"p");
 	static final QBF lncsExampleNNF = lncsExample.toNNF();
+
+	private static String joinCommaDelimited(Stream<String> stream) {
+		return stream.collect(Collectors.joining(","));
+	}
 
 	@Test
 	@DisplayName("illegal construction")
@@ -186,6 +193,137 @@ class QBFTest {
 		assertEquals(
 			exists.stream(Traverse.PostOrder).collect(Collectors.toList()),
 			Arrays.asList(lit1, lit2, lit3, QBF.False, or, not, forall, exists));
+	}
+
+	@Test
+	@DisplayName("streamVariables")
+	void test_streamVariables() {
+		QBF lit1 = new Literal(x1);
+		QBF lit2 = new Literal(x2);
+		QBF lit3 = new Literal(x3);
+		QBF lit4 = new Literal(x4);
+		QBF and = new And(lit1, lit2, lit3);
+		QBF or = new Or(and, lit4);
+		QBF not = new Not(or);
+		QBF forall = new ForAll(not, x2);
+		QBF exists = new Exists(forall, x1);
+
+		assertEquals(
+			"x1",
+			joinCommaDelimited(lit1.streamVariables()));
+
+		assertEquals(
+			"x1,x2,x3",
+			joinCommaDelimited(and.streamVariables()));
+
+		assertEquals(
+			"x1,x2,x3,x4",
+			joinCommaDelimited(or.streamVariables()));
+
+		assertEquals(
+			"x1,x2,x3,x4",
+			joinCommaDelimited(not.streamVariables()));
+
+		assertEquals(
+			"x2,x1,x2,x3,x4",
+			joinCommaDelimited(forall.streamVariables()));
+
+		assertEquals(
+			"x1,x2,x1,x2,x3,x4",
+			joinCommaDelimited(exists.streamVariables()));
+
+		assertEquals(
+			"p,q,r,s,t,ϕ0,q',r',ϕ1,q'',r'',ϕ2",
+			joinCommaDelimited(lncsExample.streamVariables()));
+	}
+
+	@Test
+	@DisplayName("streamFreeVariables")
+	void test_streamFreeVariables() {
+		QBF lit1 = new Literal(x1);
+		QBF lit2 = new Literal(x2);
+		QBF lit3 = new Literal(x3);
+		QBF lit4 = new Literal(x4);
+		QBF and = new And(lit1, lit2, lit3);
+		QBF or = new Or(and, lit4);
+		QBF not = new Not(or);
+		QBF forall = new ForAll(not, x2);
+		QBF exists = new Exists(forall, x1);
+
+		assertEquals(
+			"x1",
+			joinCommaDelimited(lit1.streamFreeVariables()));
+
+		assertEquals(
+			"x1,x2,x3",
+			joinCommaDelimited(and.streamFreeVariables()));
+
+		assertEquals(
+			"x1,x2,x3,x4",
+			joinCommaDelimited(or.streamFreeVariables()));
+
+		assertEquals(
+			"x1,x2,x3,x4",
+			joinCommaDelimited(not.streamFreeVariables()));
+
+		assertEquals(
+			"x1,x3,x4",
+			joinCommaDelimited(forall.streamFreeVariables()));
+
+		assertEquals(
+			"x3,x4",
+			joinCommaDelimited(exists.streamFreeVariables()));
+
+		assertEquals(
+			"ϕ0,ϕ1,ϕ2",
+			joinCommaDelimited(lncsExample.streamFreeVariables()));
+	}
+
+	@Test
+	@DisplayName("streamBoundedVariables")
+	void test_streamBoundedVariables() {
+		QBF lit1 = new Literal(x1);
+		QBF lit2 = new Literal(x2);
+		QBF lit3 = new Literal(x3);
+		QBF lit4 = new Literal(x4);
+		QBF and = new And(lit1, lit2, lit3);
+		QBF or = new Or(and, lit4);
+		QBF not = new Not(or);
+		QBF forall = new ForAll(not, x2);
+		QBF exists = new Exists(forall, x1);
+		QBF unclean = new And(forall, exists, new ForAll(and, x2));
+
+		assertEquals(
+			"",
+			joinCommaDelimited(lit1.streamBoundedVariables()));
+
+		assertEquals(
+			"",
+			joinCommaDelimited(and.streamBoundedVariables()));
+
+		assertEquals(
+			"",
+			joinCommaDelimited(or.streamBoundedVariables()));
+
+		assertEquals(
+			"",
+			joinCommaDelimited(not.streamBoundedVariables()));
+
+		assertEquals(
+			"x2",
+			joinCommaDelimited(forall.streamBoundedVariables()));
+
+		assertEquals(
+			"x1,x2",
+			joinCommaDelimited(exists.streamBoundedVariables()));
+
+		assertEquals(
+			"x2,x1,x2,x2",
+			joinCommaDelimited(unclean.streamBoundedVariables()));
+
+		assertEquals(
+			"p,q,r,s,t,q',r',q'',r''",
+			joinCommaDelimited(lncsExample.streamBoundedVariables()));
 	}
 
 	@Test
@@ -365,6 +503,100 @@ class QBFTest {
 		assertEquals(or.negate(), new Not(or));
 		assertEquals(forall.negate(), new Not(forall));
 		assertEquals(exists.negate(), new Not(exists));
+	}
+
+	@Test
+	@DisplayName("rename")
+	void test_rename() {
+		QBF lit1 = new Literal(x1);
+		QBF lit2 = new Literal(x2);
+		QBF lit3 = new Literal(x3);
+		QBF lit4 = new Literal(x4);
+		QBF and = new And(lit1, lit2, lit3);
+		QBF or = new Or(and, lit4);
+		QBF not = new Not(or);
+		QBF forall = new ForAll(not, x2);
+		QBF exists = new Exists(forall, x1);
+
+		QBF result;
+		Map<String, String> variables = new HashMap<>();
+
+		variables.put("x1", "1");
+		variables.put("x2", "2");
+		variables.put("x3", "3");
+		variables.put("x4", "4");
+		result = exists.rename(variables);
+
+		assertEquals(
+			"1,2,1,2,3,4",
+			joinCommaDelimited(result.streamVariables()));
+
+		variables.put("ϕ0", "1");
+		variables.put("ϕ1", "2");
+		variables.put("ϕ2", "3");
+		result = lncsExample.rename(variables);
+
+		assertEquals(
+			"p,q,r,s,t,1,q',r',2,q'',r'',3",
+			joinCommaDelimited(result.streamVariables()));
+	}
+
+	@Test
+	@DisplayName("cleanse")
+	void test_cleanse() {
+		QBF lit1 = new Literal(x1);
+		QBF lit2 = new Literal(x2);
+		QBF lit3 = new Literal(x3);
+		QBF lit4 = new Literal(x4);
+		QBF and = new And(lit1, lit2, lit3);
+		QBF or = new Or(and, lit4);
+		QBF not = new Not(or);
+		QBF forall = new ForAll(not, x2);
+		QBF exists = new Exists(forall, x1);
+		QBF unclean1 = new And(forall, exists, new ForAll(and, x2));
+		QBF unclean2 = new Or(exists, exists, exists);
+		QBF unclean3 = new ForAll(
+			new And(
+				new ForAll(
+					new And(
+						new Or(lit1, lit3, lit4),
+						new Or(lit1, lit3, lit4)),
+					x1, x2),
+				new ForAll(
+					new And(
+						new Or(lit1, lit3, lit4),
+						new Or(lit1, lit3, lit4)),
+					x1, x2),
+				new ForAll(
+					new And(
+						new Or(lit1, lit3, lit4),
+						new Or(lit1, lit3, lit4)),
+					x1, x2)),
+			x1);
+
+		assertEquals(
+			"∃1: ∀2: -((1 ∧ 2 ∧ 3) ∨ 4)",
+			exists.cleanse().toString());
+
+		assertEquals(
+			"(∀1: -((5 ∧ 1 ∧ 6) ∨ 7) ∧ ∃2: ∀3: -((2 ∧ 3 ∧ 6) ∨ 7) ∧ ∀4: (5 ∧ 4 ∧ 6))",
+			unclean1.cleanse().toString());
+
+		assertEquals(
+			"(∃1: ∀2: -((1 ∧ 2 ∧ 7) ∨ 8) ∨ ∃3: ∀4: -((3 ∧ 4 ∧ 7) ∨ 8) ∨ ∃5: ∀6: -((5 ∧ 6 ∧ 7) ∨ 8))",
+			unclean2.cleanse().toString());
+
+		assertEquals(
+			"(∀1: ((1 ∨ 4 ∨ 5) ∧ (1 ∨ 4 ∨ 5)) ∧ ∀2: ((2 ∨ 4 ∨ 5) ∧ (2 ∨ 4 ∨ 5)) ∧ ∀3: ((3 ∨ 4 ∨ 5) ∧ (3 ∨ 4 ∨ 5)))",
+			unclean3.cleanse().toString());
+
+		assertEquals(
+			"(1 ∧ 2 ∧ -3)",
+			lncsExample.cleanse().toString());
+
+		assertEquals(
+			"(1 ∧ 2 ∧ -3)",
+			lncsExampleNNF.cleanse().toString());
 	}
 
 	@Test

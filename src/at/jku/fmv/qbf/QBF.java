@@ -3,12 +3,14 @@ package at.jku.fmv.qbf;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -23,14 +25,26 @@ public abstract class QBF {
 
 	private QBF() {}
 
-//	public abstract void accept(Consumer<True> t,
-//								Consumer<False> f,
-//								Consumer<Literal> lit,
-//								Consumer<Not> not,
-//								Consumer<And> and,
-//								Consumer<Or> or,
-//								Consumer<ForAll> forall,
-//								Consumer<Exists> exists);
+	public abstract void accept(Consumer<True> t,
+								Consumer<False> f,
+								Consumer<Literal> lit,
+								Consumer<Not> not,
+								Consumer<And> and,
+								Consumer<Or> or,
+								Consumer<ForAll> forall,
+								Consumer<Exists> exists);
+
+	public void accept(Consumer<ForAll> forall, Consumer<Exists> exists) {
+		this.accept(
+			t -> { throw new IllegalArgumentException("not a quantifier"); },
+			f -> { throw new IllegalArgumentException("not a quantifier"); },
+			lit -> { throw new IllegalArgumentException("not a quantifier"); },
+			not -> { throw new IllegalArgumentException("not a quantifier"); },
+			and -> { throw new IllegalArgumentException("not a quantifier"); },
+			or -> { throw new IllegalArgumentException("not a quantifier"); },
+			forall,
+			exists);
+	}
 
 	public abstract <T> T apply(Function<True, T> t,
 								Function<False, T> f,
@@ -54,6 +68,16 @@ public abstract class QBF {
 	}
 
 	public static final class True extends QBF {
+
+		public void accept(	Consumer<True> t,
+							Consumer<False> f,
+							Consumer<Literal> lit,
+							Consumer<Not> not,
+							Consumer<And> and,
+							Consumer<Or> or,
+							Consumer<ForAll> forall,
+							Consumer<Exists> exists) { t.accept(this); }
+
 		public <T> T apply(	Function<True, T> t,
 							Function<False, T> f,
 							Function<Literal, T> lit,
@@ -63,11 +87,20 @@ public abstract class QBF {
 							Function<ForAll, T> forall,
 							Function<Exists, T> exists ) { return t.apply(this); }
 
-
 		private True() {}
 	}
 
 	public static final class False extends QBF {
+
+		public void accept(	Consumer<True> t,
+							Consumer<False> f,
+							Consumer<Literal> lit,
+							Consumer<Not> not,
+							Consumer<And> and,
+							Consumer<Or> or,
+							Consumer<ForAll> forall,
+							Consumer<Exists> exists) { f.accept(this); }
+
 		public <T> T apply(	Function<True, T> t,
 							Function<False, T> f,
 							Function<Literal, T> lit,
@@ -82,6 +115,15 @@ public abstract class QBF {
 
 	public static final class Literal extends QBF {
 		public final String variable;
+
+		public void accept(	Consumer<True> t,
+							Consumer<False> f,
+							Consumer<Literal> lit,
+							Consumer<Not> not,
+							Consumer<And> and,
+							Consumer<Or> or,
+							Consumer<ForAll> forall,
+							Consumer<Exists> exists) { lit.accept(this); }
 
 		public <T> T apply(	Function<True, T> t,
 							Function<False, T> f,
@@ -103,6 +145,15 @@ public abstract class QBF {
 	public static final class Not extends QBF {
 		public final QBF subformula;
 
+		public void accept(	Consumer<True> t,
+							Consumer<False> f,
+							Consumer<Literal> lit,
+							Consumer<Not> not,
+							Consumer<And> and,
+							Consumer<Or> or,
+							Consumer<ForAll> forall,
+							Consumer<Exists> exists) { not.accept(this); }
+
 		public <T> T apply(	Function<True, T> t,
 							Function<False, T> f,
 							Function<Literal, T> lit,
@@ -122,6 +173,15 @@ public abstract class QBF {
 
 	public static final class And extends QBF {
 		public final List<QBF> subformulas;
+
+		public void accept(	Consumer<True> t,
+							Consumer<False> f,
+							Consumer<Literal> lit,
+							Consumer<Not> not,
+							Consumer<And> and,
+							Consumer<Or> or,
+							Consumer<ForAll> forall,
+							Consumer<Exists> exists) { and.accept(this); }
 
 		public <T> T apply(	Function<True, T> t,
 							Function<False, T> f,
@@ -145,6 +205,15 @@ public abstract class QBF {
 	public static final class Or extends QBF {
 		public final List<QBF> subformulas;
 
+		public void accept(	Consumer<True> t,
+							Consumer<False> f,
+							Consumer<Literal> lit,
+							Consumer<Not> not,
+							Consumer<And> and,
+							Consumer<Or> or,
+							Consumer<ForAll> forall,
+							Consumer<Exists> exists) { or.accept(this); }
+
 		public <T> T apply(	Function<True, T> t,
 							Function<False, T> f,
 							Function<Literal, T> lit,
@@ -167,6 +236,15 @@ public abstract class QBF {
 	public static final class ForAll extends QBF {
 		public final QBF subformula;
 		public final Set<String> variables;
+
+		public void accept(	Consumer<True> t,
+							Consumer<False> f,
+							Consumer<Literal> lit,
+							Consumer<Not> not,
+							Consumer<And> and,
+							Consumer<Or> or,
+							Consumer<ForAll> forall,
+							Consumer<Exists> exists) { forall.accept(this); }
 
 		public <T> T apply(	Function<True, T> t,
 							Function<False, T> f,
@@ -195,6 +273,15 @@ public abstract class QBF {
 	public static final class Exists extends QBF {
 		public final QBF subformula;
 		public final Set<String> variables;
+
+		public void accept(	Consumer<True> t,
+							Consumer<False> f,
+							Consumer<Literal> lit,
+							Consumer<Not> not,
+							Consumer<And> and,
+							Consumer<Or> or,
+							Consumer<ForAll> forall,
+							Consumer<Exists> exists) { exists.accept(this); }
 
 		public <T> T apply(	Function<True, T> t,
 							Function<False, T> f,
@@ -288,55 +375,62 @@ public abstract class QBF {
 		if (this == o) return true;
 		if (!(o instanceof QBF)) return false;
 
-		final QBF other = (QBF) o;
-
-		Function<True, Boolean> noTrue = x -> false;
-		Function<False, Boolean> noFalse = x -> false;
-		Function<Literal, Boolean> noLiteral = x -> false;
-		Function<Not, Boolean> noNot = x -> false;
-		Function<And, Boolean> noAnd = x -> false;
-		Function<Or, Boolean> noOr = x -> false;
-		Function<ForAll, Boolean> noForall = x -> false;
-		Function<Exists, Boolean> noExists = x -> false;
-
-		return this.apply(
-			(True t) -> t == True,
-			(False f) -> f == False,
-			(Literal lit1) ->
-				other.apply(
-					noTrue, noFalse,
-					(Literal lit2) -> lit1.variable.equals(lit2.variable),
-					noNot, noAnd, noOr, noForall, noExists),
-			(Not not1) ->
-				other.apply(
-					noTrue, noFalse, noLiteral,
-					(Not not2) -> not1.subformula.equals(not2.subformula),
-					noAnd, noOr, noForall, noExists),
-			(And and1) ->
-				other.apply(
-					noTrue, noFalse, noLiteral, noNot,
-					(And and2) -> and1.subformulas.equals(and2.subformulas),
-					noOr, noForall, noExists),
-			(Or or1) ->
-				other.apply(
-					noTrue, noFalse, noLiteral, noNot, noAnd,
-					(Or or2) -> or1.subformulas.equals(or2.subformulas),
-					noForall, noExists),
-			(ForAll forall1) ->
-				other.apply(
-					noTrue, noFalse, noLiteral, noNot, noAnd, noOr,
-					(ForAll forall2) ->
-						forall1.variables.equals(forall2.variables) &&
-						forall1.subformula.equals(forall2.subformula),
-					noExists),
-			(Exists exists1) ->
-				other.apply(
-					noTrue, noFalse, noLiteral, noNot, noAnd, noOr, noForall,
-					(Exists exists2) ->
-						exists1.variables.equals(exists2.variables) &&
-						exists1.subformula.equals(exists2.subformula))
-		);
+		return hashCode() == o.hashCode();
 	}
+
+//	public boolean equals(Object o) {
+//		if (this == o) return true;
+//		if (!(o instanceof QBF)) return false;
+//
+//		final QBF other = (QBF) o;
+//
+//		Function<True, Boolean> noTrue = x -> false;
+//		Function<False, Boolean> noFalse = x -> false;
+//		Function<Literal, Boolean> noLiteral = x -> false;
+//		Function<Not, Boolean> noNot = x -> false;
+//		Function<And, Boolean> noAnd = x -> false;
+//		Function<Or, Boolean> noOr = x -> false;
+//		Function<ForAll, Boolean> noForall = x -> false;
+//		Function<Exists, Boolean> noExists = x -> false;
+//
+//		return this.apply(
+//			(True t) -> t == True,
+//			(False f) -> f == False,
+//			(Literal lit1) ->
+//				other.apply(
+//					noTrue, noFalse,
+//					(Literal lit2) -> lit1.variable.equals(lit2.variable),
+//					noNot, noAnd, noOr, noForall, noExists),
+//			(Not not1) ->
+//				other.apply(
+//					noTrue, noFalse, noLiteral,
+//					(Not not2) -> not1.subformula.equals(not2.subformula),
+//					noAnd, noOr, noForall, noExists),
+//			(And and1) ->
+//				other.apply(
+//					noTrue, noFalse, noLiteral, noNot,
+//					(And and2) -> and1.subformulas.equals(and2.subformulas),
+//					noOr, noForall, noExists),
+//			(Or or1) ->
+//				other.apply(
+//					noTrue, noFalse, noLiteral, noNot, noAnd,
+//					(Or or2) -> or1.subformulas.equals(or2.subformulas),
+//					noForall, noExists),
+//			(ForAll forall1) ->
+//				other.apply(
+//					noTrue, noFalse, noLiteral, noNot, noAnd, noOr,
+//					(ForAll forall2) ->
+//						forall1.variables.equals(forall2.variables) &&
+//						forall1.subformula.equals(forall2.subformula),
+//					noExists),
+//			(Exists exists1) ->
+//				other.apply(
+//					noTrue, noFalse, noLiteral, noNot, noAnd, noOr, noForall,
+//					(Exists exists2) ->
+//						exists1.variables.equals(exists2.variables) &&
+//						exists1.subformula.equals(exists2.subformula))
+//		);
+//	}
 
 	public enum Traverse { PreOrder, PostOrder };
 	public Stream<QBF> stream(Traverse traversal) {
@@ -355,6 +449,72 @@ public abstract class QBF {
 			traversal == Traverse.PreOrder ?
 				Stream.concat(Stream.of(this), childStream) :
 				Stream.concat(childStream, Stream.of(this));
+	}
+
+	public Stream<String> streamVariables() {
+		return this.apply(
+			(True t) -> Stream.empty(),
+			(False f) -> Stream.empty(),
+			(Literal lit) -> Stream.of(lit.variable),
+			(Not not) ->
+				not.subformula.streamVariables(),
+			(And and) ->
+				and.subformulas.stream().flatMap(QBF::streamVariables),
+			(Or or) ->
+				or.subformulas.stream().flatMap(QBF::streamVariables),
+			(ForAll forall) ->
+				Stream.concat(
+					forall.variables.stream(),
+					forall.subformula.streamVariables()),
+			(Exists exists) ->
+				Stream.concat(
+					exists.variables.stream(),
+					exists.subformula.streamVariables())
+		);
+	}
+
+	public Stream<String> streamFreeVariables() {
+		return this.apply(
+			(True t) -> Stream.empty(),
+			(False f) -> Stream.empty(),
+			(Literal lit) -> Stream.of(lit.variable),
+			(Not not) ->
+				not.subformula.streamFreeVariables(),
+			(And and) ->
+				and.subformulas.stream().flatMap(QBF::streamFreeVariables),
+			(Or or) ->
+				or.subformulas.stream().flatMap(QBF::streamFreeVariables),
+			(ForAll forall) ->
+				forall.subformula.streamFreeVariables()
+					.filter(v -> !forall.variables.contains(v)),
+			(Exists exists) ->
+				exists.subformula.streamFreeVariables()
+					.filter(v -> !exists.variables.contains(v))
+		);
+	}
+
+	public Stream<String> streamBoundedVariables() {
+		return this.apply(
+			(True t) -> Stream.empty(),
+			(False f) -> Stream.empty(),
+			(Literal lit) -> Stream.empty(),
+			(Not not) ->
+				not.subformula.streamBoundedVariables(),
+			(And and) ->
+				and.subformulas.stream()
+					.flatMap(QBF::streamBoundedVariables),
+			(Or or) ->
+				or.subformulas.stream()
+					.flatMap(QBF::streamBoundedVariables),
+			(ForAll forall) ->
+				Stream.concat(
+					forall.variables.stream(),
+					forall.subformula.streamBoundedVariables()),
+			(Exists exists) ->
+				Stream.concat(
+					exists.variables.stream(),
+					exists.subformula.streamBoundedVariables())
+		);
 	}
 
 	public Stream<QBF> streamPrefix() {
@@ -387,7 +547,6 @@ public abstract class QBF {
 					childPaths.isEmpty() ?
 						Stream.of(forall) :
 						childPaths.stream().map(f -> new ForAll(f, forall.variables).unifyPrefix());
-//						childPaths.stream().map(f -> new ForAll(f, forall.variables));
 			},
 			(Exists exists) -> {
 				List<QBF> childPaths = exists.subformula.streamQPaths().collect(Collectors.toList());
@@ -395,7 +554,6 @@ public abstract class QBF {
 					childPaths.isEmpty() ?
 						Stream.of(exists) :
 						childPaths.stream().map(f -> new Exists(f, exists.variables).unifyPrefix());
-//						childPaths.stream().map(f -> new Exists(f, exists.variables));
 			}
 		);
 	}
@@ -473,7 +631,9 @@ public abstract class QBF {
 	}
 
 	/**
-	 * Unify all sequences of equal quantifiers in the formula's prefix (e.g. ∀x: ∀y: ϕ -> ∀x,y: ϕ).
+	 * Unify all sequences of equal quantifiers in the formula's prefix.
+	 *
+	 * Example: ∀x: ∀y: ϕ -> ∀x,y: ϕ
 	 *
 	 * @return QBF with purely alternating prefix
 	 */
@@ -516,6 +676,131 @@ public abstract class QBF {
 			(ForAll forall) -> new Not(forall),
 			(Exists exists) -> new Not(exists)
 		);
+	}
+
+	public QBF rename(Map<String, String> variables) {
+		return this.apply(
+			(True t) -> t,
+			(False f) -> f,
+			(Literal lit) ->
+				variables.containsKey(lit.variable)
+					? new Literal(variables.get(lit.variable))
+					: lit,
+			(Not not) -> new Not(not.subformula.rename(variables)),
+			(And and) ->
+				new And(
+					and.subformulas.stream()
+						.map(f -> f.rename(variables))
+						.collect(Collectors.toList())),
+			(Or or) ->
+				new Or(
+					or.subformulas.stream()
+						.map(f -> f.rename(variables))
+						.collect(Collectors.toList())),
+			(ForAll forall) ->
+				new ForAll(
+					forall.subformula.rename(variables),
+					forall.variables.stream()
+						.map(v -> variables.containsKey(v)
+							? variables.get(v)
+							: v)
+						.collect(Collectors.toSet())),
+			(Exists exists) ->
+				new Exists(
+					exists.subformula.rename(variables),
+					exists.variables.stream()
+						.map(v -> variables.containsKey(v)
+							? variables.get(v)
+							: v)
+						.collect(Collectors.toSet()))
+		);
+	}
+
+	/**
+	 * Produces a cleansed QBF:
+	 * (1) a variable is only quantified once
+	 * (2) a variable is either quantified or free
+	 * (3) variables are renamed to integers in order of their occurrence,
+	 *     starting from 1 (bound: [1, #bound]; free: ]#bound, #variables])
+	 * (4) quantifiers have all bound variables in their scope
+	 *
+	 * @return
+	 */
+	public QBF cleanse() {
+		int[] counter = {1};
+		Set<String> bound = new HashSet<>();
+		Set<String> free = new HashSet<>();
+		Map<String, String> rename = new HashMap<>();
+
+		// NOTE: local variables can't hold recursive lambdas - use Class instead
+		class Cleaner {
+			final QBF formula;
+
+			Cleaner(QBF formula) {
+				this.formula = formula.apply(
+					(True t) -> t,
+					(False f) -> f,
+					(Literal lit) -> {
+						free.add(lit.variable);
+						if (bound.contains(lit.variable)) {
+							String newName =
+								rename.putIfAbsent(
+									lit.variable,
+									Integer.toString(counter[0]));
+							if (newName == null) {
+								newName = rename.get(lit.variable);
+								counter[0]++;
+							}
+							return new Literal(newName);
+						}
+						return lit;
+					},
+					(Not not) ->
+						new Not(new Cleaner(not.subformula).formula),
+					(And and) ->
+						new And(and.subformulas.stream()
+							.map(f -> new Cleaner(f).formula)
+							.collect(Collectors.toList())),
+					(Or or) ->
+						new Or(or.subformulas.stream()
+							.map(f -> new Cleaner(f).formula)
+							.collect(Collectors.toList())),
+					(ForAll forall) -> {
+						bound.addAll(forall.variables);
+						QBF subformula = new Cleaner(forall.subformula).formula;
+						bound.removeAll(forall.variables);
+						Set<String> variables = forall.variables.stream()
+							.filter(v -> free.contains(v))
+							.peek(free::remove)
+							.map(rename::remove)
+							.collect(Collectors.toSet());
+						return variables.isEmpty()
+							? subformula
+							: new ForAll(subformula, variables);
+					},
+					(Exists exists) -> {
+						bound.addAll(exists.variables);
+						QBF subformula = new Cleaner(exists.subformula).formula;
+						bound.removeAll(exists.variables);
+						Set<String> variables = exists.variables.stream()
+							.filter(v -> free.contains(v))
+							.peek(free::remove)
+							.map(rename::remove)
+							.collect(Collectors.toSet());
+						return variables.isEmpty()
+							? subformula
+							: new Exists(subformula, variables);
+					}
+				);
+			}
+		}
+
+		return new Cleaner(this)
+			.formula
+			.rename(free.stream()
+				.collect(Collectors.toMap(
+					v -> v,
+					v -> Integer.toString(counter[0]++))));
 	}
 
 	public QBF toNNF() {
