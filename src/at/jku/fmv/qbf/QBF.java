@@ -69,6 +69,8 @@ public abstract class QBF {
 
 	public static final class True extends QBF {
 
+		private final int hash;
+
 		public void accept(	Consumer<True> t,
 							Consumer<False> f,
 							Consumer<Literal> lit,
@@ -87,10 +89,12 @@ public abstract class QBF {
 							Function<ForAll, T> forall,
 							Function<Exists, T> exists ) { return t.apply(this); }
 
-		private True() {}
+		private True() { this.hash = this.hash(); }
 	}
 
 	public static final class False extends QBF {
+
+		private final int hash;
 
 		public void accept(	Consumer<True> t,
 							Consumer<False> f,
@@ -110,10 +114,13 @@ public abstract class QBF {
 							Function<ForAll, T> forall,
 							Function<Exists, T> exists ) { return f.apply(this); }
 
-		private False() {}
+		private False() { this.hash = this.hash(); }
 	}
 
 	public static final class Literal extends QBF {
+
+		private final int hash;
+
 		public final String variable;
 
 		public void accept(	Consumer<True> t,
@@ -139,10 +146,15 @@ public abstract class QBF {
 				throw new IllegalArgumentException("missing variable");
 
 			this.variable = variable;
+
+			this.hash = this.hash();
 		}
 	}
 
 	public static final class Not extends QBF {
+
+		private final int hash;
+
 		public final QBF subformula;
 
 		public void accept(	Consumer<True> t,
@@ -168,10 +180,15 @@ public abstract class QBF {
 				throw new IllegalArgumentException("missing subformula");
 
 			this.subformula = subformula;
+
+			this.hash = this.hash();
 		}
 	}
 
 	public static final class And extends QBF {
+
+		private final int hash;
+
 		public final List<QBF> subformulas;
 
 		public void accept(	Consumer<True> t,
@@ -197,12 +214,17 @@ public abstract class QBF {
 				throw new IllegalArgumentException("missing subformulas");
 
 			this.subformulas = subformulas;
+
+			this.hash = this.hash();
 		}
 
 		public And(QBF... subformulas) { this(Arrays.asList(subformulas)); }
 	}
 
 	public static final class Or extends QBF {
+
+		private final int hash;
+
 		public final List<QBF> subformulas;
 
 		public void accept(	Consumer<True> t,
@@ -228,12 +250,17 @@ public abstract class QBF {
 				throw new IllegalArgumentException("missing subformulas");
 
 			this.subformulas = subformulas;
+
+			this.hash = this.hash();
 		}
 
 		public Or(QBF... subformulas) { this(Arrays.asList(subformulas)); }
 	}
 
 	public static final class ForAll extends QBF {
+
+		private final int hash;
+
 		public final QBF subformula;
 		public final Set<String> variables;
 
@@ -263,6 +290,8 @@ public abstract class QBF {
 
 			this.subformula = subformula;
 			this.variables = Collections.unmodifiableSet(variables);
+
+			this.hash = this.hash();
 		}
 
 		public ForAll(QBF subformula, String... variables) {
@@ -271,6 +300,9 @@ public abstract class QBF {
 	}
 
 	public static final class Exists extends QBF {
+
+		private final int hash;
+
 		public final QBF subformula;
 		public final Set<String> variables;
 
@@ -300,6 +332,8 @@ public abstract class QBF {
 
 			this.subformula = subformula;
 			this.variables = Collections.unmodifiableSet(variables);
+
+			this.hash = this.hash();
 		}
 
 		public Exists(QBF subformula, String... variables) {
@@ -308,6 +342,13 @@ public abstract class QBF {
 	}
 
 	// TODO: include (more) predicates? static or not static?
+	public static final Predicate<QBF> isConstant = formula ->
+		formula.apply(
+			t -> true, f -> true,
+			lit -> false, not -> false, and -> false, or -> false, forall -> false, exists -> false
+		);
+	public boolean isConstant() { return isConstant.test(this); }
+
 	public static final Predicate<QBF> isQuantifier = formula ->
 		formula.apply(
 			t -> false, f -> false, lit -> false, not -> false, and -> false, or -> false,
@@ -332,13 +373,6 @@ public abstract class QBF {
 		);
 	public boolean isExists() { return isExists.test(this); }
 
-	public static final Predicate<QBF> isConstant = formula ->
-		formula.apply(
-			t -> true, f -> true,
-			lit -> false, not -> false, and -> false, or -> false, forall -> false, exists -> false
-		);
-	public boolean isConstant() { return isConstant.test(this); }
-
 	public static final Predicate<QBF> isLiteral = formula ->
 		formula.apply(
 			t -> false, f -> false,
@@ -347,6 +381,30 @@ public abstract class QBF {
 			and -> false, or -> false, forall -> false, exists -> false
 		);
 	public boolean isLiteral() { return isLiteral.test(this); }
+
+	public static final Predicate<QBF> isNegation = formula ->
+		formula.apply(
+			t -> false, f -> false, lit -> false,
+			not -> true,
+			and -> false, or -> false, forall -> false, exists -> false
+		);
+	public boolean isNegation() { return isNegation.test(this); }
+
+	public static final Predicate<QBF> isAnd = formula ->
+		formula.apply(
+			t -> false, f -> false, lit -> false, not -> false,
+			and -> true,
+			or -> false, forall -> false, exists -> false
+		);
+	public boolean isAnd() { return isAnd.test(this); }
+
+	public static final Predicate<QBF> isOr = formula ->
+		formula.apply(
+			t -> false, f -> false, lit -> false, not -> false, and -> false,
+			or -> true,
+			forall -> false, exists -> false
+		);
+	public boolean isOr() { return isOr.test(this); }
 
 	private enum HashID {
 		FALSE,
@@ -359,7 +417,7 @@ public abstract class QBF {
 		EXISTS
 	}
 
-	public int hashCode() {
+	protected int hash() {
 		return this.apply(
 			t -> HashID.TRUE.ordinal(),
 			f -> HashID.FALSE.ordinal(),
@@ -369,6 +427,18 @@ public abstract class QBF {
 			or -> (or.subformulas.hashCode() << 3) + HashID.OR.ordinal(),
 			forall -> (Objects.hash(forall.subformula, forall.variables) << 3) + HashID.FORALL.ordinal(),
 			exists -> (Objects.hash(exists.subformula, exists.variables) << 3) + HashID.EXISTS.ordinal());
+	}
+
+	public int hashCode() {
+		return this.apply(
+			t -> t.hash,
+			f -> f.hash,
+			lit -> lit.hash,
+			not -> not.hash,
+			and -> and.hash,
+			or -> or.hash,
+			forall -> forall.hash,
+			exists -> exists.hash);
 	}
 
 	public boolean equals(Object o) {
@@ -770,7 +840,7 @@ public abstract class QBF {
 						QBF subformula = new Cleaner(forall.subformula).formula;
 						bound.removeAll(forall.variables);
 						Set<String> variables = forall.variables.stream()
-							.filter(v -> free.contains(v))
+							.filter(free::contains)
 							.peek(free::remove)
 							.map(rename::remove)
 							.collect(Collectors.toSet());
@@ -783,7 +853,7 @@ public abstract class QBF {
 						QBF subformula = new Cleaner(exists.subformula).formula;
 						bound.removeAll(exists.variables);
 						Set<String> variables = exists.variables.stream()
-							.filter(v -> free.contains(v))
+							.filter(free::contains)
 							.peek(free::remove)
 							.map(rename::remove)
 							.collect(Collectors.toSet());

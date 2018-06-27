@@ -74,7 +74,7 @@ public abstract class SimpleUpDownStrategy extends ShiftingStrategy {
 
 				qpaths.removeAll(
 					qpaths.stream()
-						.filter(qp -> !(qp.isForAll() || qp.isExists()))
+						.filter(QBF.isQuantifier.negate())
 						.collect(Collectors.toSet()));
 
 				numCritical[0]--;
