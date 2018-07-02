@@ -553,42 +553,70 @@ class QBFTest {
 		QBF not = new Not(or);
 		QBF forall = new ForAll(not, x2);
 		QBF exists = new Exists(forall, x1);
+		QBF constant = new And(exists, QBF.True);
 		QBF unclean1 = new And(forall, exists, new ForAll(and, x2));
 		QBF unclean2 = new Or(exists, exists, exists);
-		QBF unclean3 = new ForAll(
-			new And(
-				new ForAll(
-					new And(
-						new Or(lit1, lit3, lit4),
-						new Or(lit1, lit3, lit4)),
-					x1, x2),
-				new ForAll(
-					new And(
-						new Or(lit1, lit3, lit4),
-						new Or(lit1, lit3, lit4)),
-					x1, x2),
-				new ForAll(
-					new And(
-						new Or(lit1, lit3, lit4),
-						new Or(lit1, lit3, lit4)),
-					x1, x2)),
-			x1);
+		QBF unclean3 =
+			new ForAll(
+				new And(
+					new ForAll(
+						new And(
+							new Or(lit1, lit3, lit4),
+							new Or(lit1, lit3, lit4)),
+						x1, x2),
+					new ForAll(
+						new And(
+							new Or(lit1, lit3, lit4),
+							new Or(lit1, lit3, lit4)),
+						x1, x2),
+					new ForAll(
+						new And(
+							new Or(lit1, lit3, lit4),
+							new Or(lit1, lit3, lit4)),
+						x1, x2)),
+				x1);
+		QBF unclean4 =
+			new Or(
+				new Literal(x1),
+				new Literal(x2),
+				new And(
+					new Literal(x3),
+					new Literal(x4),
+					unclean3));
 
 		assertEquals(
 			"∃1: ∀2: -((1 ∧ 2 ∧ 3) ∨ 4)",
 			exists.cleanse().toString());
 
 		assertEquals(
-			"(∀1: -((5 ∧ 1 ∧ 6) ∨ 7) ∧ ∃2: ∀3: -((2 ∧ 3 ∧ 6) ∨ 7) ∧ ∀4: (5 ∧ 4 ∧ 6))",
+			"(∃1: ∀2: -((1 ∧ 2 ∧ 3) ∨ 4) ∧ TRUE)",
+			constant.cleanse().toString());
+
+		assertEquals(
+			 "(∀2: -((1 ∧ 2 ∧ 3) ∨ 4) ∧ "
+			+ "∃5: ∀6: -((5 ∧ 6 ∧ 3) ∨ 4) ∧ "
+			+ "∀7: (1 ∧ 7 ∧ 3))",
 			unclean1.cleanse().toString());
 
 		assertEquals(
-			"(∃1: ∀2: -((1 ∧ 2 ∧ 7) ∨ 8) ∨ ∃3: ∀4: -((3 ∧ 4 ∧ 7) ∨ 8) ∨ ∃5: ∀6: -((5 ∧ 6 ∧ 7) ∨ 8))",
+			 "(∃1: ∀2: -((1 ∧ 2 ∧ 3) ∨ 4) ∨ "
+			+ "∃5: ∀6: -((5 ∧ 6 ∧ 3) ∨ 4) ∨ "
+			+ "∃7: ∀8: -((7 ∧ 8 ∧ 3) ∨ 4))",
 			unclean2.cleanse().toString());
 
 		assertEquals(
-			"(∀1: ((1 ∨ 4 ∨ 5) ∧ (1 ∨ 4 ∨ 5)) ∧ ∀2: ((2 ∨ 4 ∨ 5) ∧ (2 ∨ 4 ∨ 5)) ∧ ∀3: ((3 ∨ 4 ∨ 5) ∧ (3 ∨ 4 ∨ 5)))",
+			 "(∀1: ((1 ∨ 2 ∨ 3) ∧ (1 ∨ 2 ∨ 3)) ∧ "
+			+ "∀4: ((4 ∨ 2 ∨ 3) ∧ (4 ∨ 2 ∨ 3)) ∧ "
+			+ "∀5: ((5 ∨ 2 ∨ 3) ∧ (5 ∨ 2 ∨ 3)))",
 			unclean3.cleanse().toString());
+
+		assertEquals(
+			"(1 ∨ 2 ∨ ("
+			+ "3 ∧ 4 ∧ ("
+				+ "∀5: ((5 ∨ 3 ∨ 4) ∧ (5 ∨ 3 ∨ 4)) ∧ "
+				+ "∀6: ((6 ∨ 3 ∨ 4) ∧ (6 ∨ 3 ∨ 4)) ∧ "
+				+ "∀7: ((7 ∨ 3 ∨ 4) ∧ (7 ∨ 3 ∨ 4)))))",
+			unclean4.cleanse().toString());
 
 		assertEquals(
 			"(1 ∧ 2 ∧ -3)",

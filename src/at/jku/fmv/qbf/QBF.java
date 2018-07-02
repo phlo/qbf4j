@@ -798,12 +798,12 @@ public abstract class QBF {
 	 */
 	public QBF cleanse() {
 		int[] counter = {1};
-		Set<String> bound = new HashSet<>();
-		Set<String> free = new HashSet<>();
-		Map<String, String> rename = new HashMap<>();
+		Map<String, String> bound = new HashMap<>();
+		Map<String, String> free = new HashMap<>();
 
 		// NOTE: local variables can't hold recursive lambdas - use Class instead
 		class Cleaner {
+
 			final QBF formula;
 
 			Cleaner(QBF formula) {
@@ -811,19 +811,17 @@ public abstract class QBF {
 					(True t) -> t,
 					(False f) -> f,
 					(Literal lit) -> {
-						free.add(lit.variable);
-						if (bound.contains(lit.variable)) {
-							String newName =
-								rename.putIfAbsent(
-									lit.variable,
-									Integer.toString(counter[0]));
-							if (newName == null) {
-								newName = rename.get(lit.variable);
-								counter[0]++;
-							}
-							return new Literal(newName);
-						}
-						return lit;
+						if (bound.containsKey(lit.variable))
+							bound.compute(lit.variable, (k, v) ->
+								v == null ? Integer.toString(counter[0]++) : v);
+
+						return new Literal(
+							bound.containsKey(lit.variable)
+								? bound.get(lit.variable)
+								: free.containsKey(lit.variable)
+									? free.get(lit.variable)
+									: free.computeIfAbsent(lit.variable,
+										v -> Integer.toString(counter[0]++)));
 					},
 					(Not not) ->
 						new Not(new Cleaner(not.subformula).formula),
@@ -836,27 +834,43 @@ public abstract class QBF {
 							.map(f -> new Cleaner(f).formula)
 							.collect(Collectors.toList())),
 					(ForAll forall) -> {
-						bound.addAll(forall.variables);
+						Map<String, String> shadowed = new HashMap<>();
+						for (String v : forall.variables) {
+							if (bound.containsKey(v))
+								shadowed.put(v, bound.get(v));
+							bound.put(v, null);
+						}
+
 						QBF subformula = new Cleaner(forall.subformula).formula;
-						bound.removeAll(forall.variables);
-						Set<String> variables = forall.variables.stream()
-							.filter(free::contains)
-							.peek(free::remove)
-							.map(rename::remove)
+
+						Set<String> variables =	forall.variables.stream()
+							.map(bound::remove)
+							.filter(Objects::nonNull)
 							.collect(Collectors.toSet());
+
+						bound.putAll(shadowed);
+
 						return variables.isEmpty()
 							? subformula
 							: new ForAll(subformula, variables);
 					},
 					(Exists exists) -> {
-						bound.addAll(exists.variables);
+						Map<String, String> shadowed = new HashMap<>();
+						for (String v : exists.variables) {
+							if (bound.containsKey(v))
+								shadowed.put(v, bound.get(v));
+							bound.put(v, null);
+						}
+
 						QBF subformula = new Cleaner(exists.subformula).formula;
-						bound.removeAll(exists.variables);
-						Set<String> variables = exists.variables.stream()
-							.filter(free::contains)
-							.peek(free::remove)
-							.map(rename::remove)
+
+						Set<String> variables =	exists.variables.stream()
+							.map(bound::remove)
+							.filter(Objects::nonNull)
 							.collect(Collectors.toSet());
+
+						bound.putAll(shadowed);
+
 						return variables.isEmpty()
 							? subformula
 							: new Exists(subformula, variables);
@@ -865,12 +879,7 @@ public abstract class QBF {
 			}
 		}
 
-		return new Cleaner(this)
-			.formula
-			.rename(free.stream()
-				.collect(Collectors.toMap(
-					v -> v,
-					v -> Integer.toString(counter[0]++))));
+		return new Cleaner(this).formula;
 	}
 
 	public QBF toNNF() {
