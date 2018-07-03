@@ -554,9 +554,9 @@ class QBFTest {
 		QBF forall = new ForAll(not, x2);
 		QBF exists = new Exists(forall, x1);
 		QBF constant = new And(exists, QBF.True);
-		QBF unclean1 = new And(forall, exists, new ForAll(and, x2));
-		QBF unclean2 = new Or(exists, exists, exists);
-		QBF unclean3 =
+		QBF duplicates1 = new And(forall, exists, new ForAll(and, x2));
+		QBF duplicates2 = new Or(exists, exists, exists);
+		QBF notOccuring =
 			new ForAll(
 				new And(
 					new ForAll(
@@ -575,14 +575,15 @@ class QBFTest {
 							new Or(lit1, lit3, lit4)),
 						x1, x2)),
 				x1);
-		QBF unclean4 =
+		QBF topFree =
 			new Or(
 				new Literal(x1),
 				new Literal(x2),
 				new And(
 					new Literal(x3),
 					new Literal(x4),
-					unclean3));
+					notOccuring));
+		QBF shadowed = new Exists(topFree, x1);
 
 		assertEquals(
 			"∃1: ∀2: -((1 ∧ 2 ∧ 3) ∨ 4)",
@@ -596,19 +597,19 @@ class QBFTest {
 			 "(∀2: -((1 ∧ 2 ∧ 3) ∨ 4) ∧ "
 			+ "∃5: ∀6: -((5 ∧ 6 ∧ 3) ∨ 4) ∧ "
 			+ "∀7: (1 ∧ 7 ∧ 3))",
-			unclean1.cleanse().toString());
+			duplicates1.cleanse().toString());
 
 		assertEquals(
 			 "(∃1: ∀2: -((1 ∧ 2 ∧ 3) ∨ 4) ∨ "
 			+ "∃5: ∀6: -((5 ∧ 6 ∧ 3) ∨ 4) ∨ "
 			+ "∃7: ∀8: -((7 ∧ 8 ∧ 3) ∨ 4))",
-			unclean2.cleanse().toString());
+			duplicates2.cleanse().toString());
 
 		assertEquals(
 			 "(∀1: ((1 ∨ 2 ∨ 3) ∧ (1 ∨ 2 ∨ 3)) ∧ "
 			+ "∀4: ((4 ∨ 2 ∨ 3) ∧ (4 ∨ 2 ∨ 3)) ∧ "
 			+ "∀5: ((5 ∨ 2 ∨ 3) ∧ (5 ∨ 2 ∨ 3)))",
-			unclean3.cleanse().toString());
+			notOccuring.cleanse().toString());
 
 		assertEquals(
 			"(1 ∨ 2 ∨ ("
@@ -616,7 +617,15 @@ class QBFTest {
 				+ "∀5: ((5 ∨ 3 ∨ 4) ∧ (5 ∨ 3 ∨ 4)) ∧ "
 				+ "∀6: ((6 ∨ 3 ∨ 4) ∧ (6 ∨ 3 ∨ 4)) ∧ "
 				+ "∀7: ((7 ∨ 3 ∨ 4) ∧ (7 ∨ 3 ∨ 4)))))",
-			unclean4.cleanse().toString());
+			topFree.cleanse().toString());
+
+		assertEquals(
+			"∃1: (1 ∨ 2 ∨ ("
+			+ "3 ∧ 4 ∧ ("
+				+ "∀5: ((5 ∨ 3 ∨ 4) ∧ (5 ∨ 3 ∨ 4)) ∧ "
+				+ "∀6: ((6 ∨ 3 ∨ 4) ∧ (6 ∨ 3 ∨ 4)) ∧ "
+				+ "∀7: ((7 ∨ 3 ∨ 4) ∧ (7 ∨ 3 ∨ 4)))))",
+			shadowed.cleanse().toString());
 
 		assertEquals(
 			"(1 ∧ 2 ∧ -3)",

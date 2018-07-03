@@ -67,7 +67,9 @@ public abstract class QBF {
 			exists);
 	}
 
-	public static final class True extends QBF {
+	public static abstract class Terminal extends QBF {}
+
+	public static final class True extends Terminal {
 
 		private final int hash;
 
@@ -92,7 +94,7 @@ public abstract class QBF {
 		private True() { this.hash = this.hash(); }
 	}
 
-	public static final class False extends QBF {
+	public static final class False extends Terminal {
 
 		private final int hash;
 
@@ -117,7 +119,7 @@ public abstract class QBF {
 		private False() { this.hash = this.hash(); }
 	}
 
-	public static final class Literal extends QBF {
+	public static final class Literal extends Terminal {
 
 		private final int hash;
 
@@ -185,11 +187,21 @@ public abstract class QBF {
 		}
 	}
 
-	public static final class And extends QBF {
-
-		private final int hash;
+	public static abstract class Gate extends QBF {
 
 		public final List<QBF> subformulas;
+
+		private Gate(List<QBF> subformulas) {
+			if (subformulas == null || subformulas.size() < 2)
+				throw new IllegalArgumentException("missing subformulas");
+
+			this.subformulas = Collections.unmodifiableList(subformulas);
+		}
+	}
+
+	public static final class And extends Gate {
+
+		private final int hash;
 
 		public void accept(	Consumer<True> t,
 							Consumer<False> f,
@@ -210,22 +222,16 @@ public abstract class QBF {
 							Function<Exists, T> exists ) { return and.apply(this); }
 
 		public And(List<QBF> subformulas) {
-			if (subformulas == null || subformulas.size() < 2)
-				throw new IllegalArgumentException("missing subformulas");
-
-			this.subformulas = subformulas;
-
+			super(subformulas);
 			this.hash = this.hash();
 		}
 
 		public And(QBF... subformulas) { this(Arrays.asList(subformulas)); }
 	}
 
-	public static final class Or extends QBF {
+	public static final class Or extends Gate {
 
 		private final int hash;
-
-		public final List<QBF> subformulas;
 
 		public void accept(	Consumer<True> t,
 							Consumer<False> f,
@@ -246,23 +252,31 @@ public abstract class QBF {
 							Function<Exists, T> exists ) { return or.apply(this); }
 
 		public Or(List<QBF> subformulas) {
-			if (subformulas == null || subformulas.size() < 2)
-				throw new IllegalArgumentException("missing subformulas");
-
-			this.subformulas = subformulas;
-
+			super(subformulas);
 			this.hash = this.hash();
 		}
 
 		public Or(QBF... subformulas) { this(Arrays.asList(subformulas)); }
 	}
 
-	public static final class ForAll extends QBF {
-
-		private final int hash;
-
+	public static abstract class Quantifier extends QBF {
 		public final QBF subformula;
 		public final Set<String> variables;
+
+		private Quantifier(QBF subformula, Set<String> variables) {
+			if (subformula == null)
+				throw new IllegalArgumentException("missing subformula");
+			if (variables == null || variables.isEmpty())
+				throw new IllegalArgumentException("missing variable");
+
+			this.subformula = subformula;
+			this.variables = Collections.unmodifiableSet(variables);
+		}
+	}
+
+	public static final class ForAll extends Quantifier {
+
+		private final int hash;
 
 		public void accept(	Consumer<True> t,
 							Consumer<False> f,
@@ -283,14 +297,7 @@ public abstract class QBF {
 							Function<Exists, T> exists ) { return forall.apply(this); }
 
 		public ForAll(QBF subformula, Set<String> variables) {
-			if (subformula == null)
-				throw new IllegalArgumentException("missing subformula");
-			if (variables == null || variables.isEmpty())
-				throw new IllegalArgumentException("missing variable");
-
-			this.subformula = subformula;
-			this.variables = Collections.unmodifiableSet(variables);
-
+			super(subformula, variables);
 			this.hash = this.hash();
 		}
 
@@ -299,12 +306,9 @@ public abstract class QBF {
 		}
 	}
 
-	public static final class Exists extends QBF {
+	public static final class Exists extends Quantifier {
 
 		private final int hash;
-
-		public final QBF subformula;
-		public final Set<String> variables;
 
 		public void accept(	Consumer<True> t,
 							Consumer<False> f,
@@ -325,14 +329,7 @@ public abstract class QBF {
 							Function<Exists, T> exists ) { return exists.apply(this); }
 
 		public Exists(QBF subformula, Set<String> variables) {
-			if (subformula == null)
-				throw new IllegalArgumentException("missing subformula");
-			if (variables == null || variables.isEmpty())
-				throw new IllegalArgumentException("missing variable");
-
-			this.subformula = subformula;
-			this.variables = Collections.unmodifiableSet(variables);
-
+			super(subformula, variables);
 			this.hash = this.hash();
 		}
 
@@ -804,6 +801,30 @@ public abstract class QBF {
 		// NOTE: local variables can't hold recursive lambdas - use Class instead
 		class Cleaner {
 
+			Function<Quantifier, QBF> cleanseQuantifier = q -> {
+				Map<String, String> shadowed = new HashMap<>();
+				for (String v : q.variables) {
+					if (bound.containsKey(v))
+						shadowed.put(v, bound.get(v));
+					bound.put(v, null);
+				}
+
+				QBF subformula = new Cleaner(q.subformula).formula;
+
+				Set<String> variables =	q.variables.stream()
+					.map(bound::remove)
+					.filter(Objects::nonNull)
+					.collect(Collectors.toSet());
+
+				bound.putAll(shadowed);
+
+				return variables.isEmpty()
+					? subformula
+					: q.apply(
+						f -> new ForAll(subformula, variables),
+						e -> new Exists(subformula, variables));
+			};
+
 			final QBF formula;
 
 			Cleaner(QBF formula) {
@@ -823,8 +844,7 @@ public abstract class QBF {
 									: free.computeIfAbsent(lit.variable,
 										v -> Integer.toString(counter[0]++)));
 					},
-					(Not not) ->
-						new Not(new Cleaner(not.subformula).formula),
+					(Not not) -> new Not(new Cleaner(not.subformula).formula),
 					(And and) ->
 						new And(and.subformulas.stream()
 							.map(f -> new Cleaner(f).formula)
@@ -833,48 +853,8 @@ public abstract class QBF {
 						new Or(or.subformulas.stream()
 							.map(f -> new Cleaner(f).formula)
 							.collect(Collectors.toList())),
-					(ForAll forall) -> {
-						Map<String, String> shadowed = new HashMap<>();
-						for (String v : forall.variables) {
-							if (bound.containsKey(v))
-								shadowed.put(v, bound.get(v));
-							bound.put(v, null);
-						}
-
-						QBF subformula = new Cleaner(forall.subformula).formula;
-
-						Set<String> variables =	forall.variables.stream()
-							.map(bound::remove)
-							.filter(Objects::nonNull)
-							.collect(Collectors.toSet());
-
-						bound.putAll(shadowed);
-
-						return variables.isEmpty()
-							? subformula
-							: new ForAll(subformula, variables);
-					},
-					(Exists exists) -> {
-						Map<String, String> shadowed = new HashMap<>();
-						for (String v : exists.variables) {
-							if (bound.containsKey(v))
-								shadowed.put(v, bound.get(v));
-							bound.put(v, null);
-						}
-
-						QBF subformula = new Cleaner(exists.subformula).formula;
-
-						Set<String> variables =	exists.variables.stream()
-							.map(bound::remove)
-							.filter(Objects::nonNull)
-							.collect(Collectors.toSet());
-
-						bound.putAll(shadowed);
-
-						return variables.isEmpty()
-							? subformula
-							: new Exists(subformula, variables);
-					}
+					(ForAll forall) -> cleanseQuantifier.apply(forall),
+					(Exists exists) -> cleanseQuantifier.apply(exists)
 				);
 			}
 		}
