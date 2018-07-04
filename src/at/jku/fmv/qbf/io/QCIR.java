@@ -1,12 +1,17 @@
 package at.jku.fmv.qbf.io;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -27,10 +32,11 @@ public final class QCIR {
 	// prevent instantiation
 	private QCIR() {}
 
-	public static QBF read(String fileName) throws IOException {
+	public static QBF read(Path file) throws IOException {
 
 		// TODO: ignore comments?
-		List<String> lines = Files.lines(Paths.get(fileName)).map(String::trim).collect(Collectors.toList());
+//		List<String> lines = Files.lines(file).map(String::trim).collect(Collectors.toList());
+		List<String> lines = Files.readAllLines(file);
 
 		Map<String, QBF> subformulas = new HashMap<String, QBF>();
 
@@ -92,7 +98,7 @@ public final class QCIR {
 			}
 			catch (IllegalArgumentException e) {
 				throw new IllegalArgumentException(
-					fileName + ":" + (lines.indexOf(line) + 1) + ": error: " + e.getMessage());
+					file.toFile() + ":" + (lines.indexOf(line) + 1) + ": error: " + e.getMessage());
 			}
 		};
 
@@ -132,7 +138,300 @@ public final class QCIR {
 		return formula;
 	}
 
-	// write to file
-	public static void write(QBF formula, String fileName) {
+	public static void write(QBF formula, String fileName, boolean isCleansed)
+		throws IOException {
+
+		class Writer {
+			StringBuilder buffer = new StringBuilder();
+
+			Set<String> boundVars = formula.streamBoundVariables()
+				.unordered()
+				.parallel()
+				.collect(Collectors.toSet());
+
+			Set<String> freeVars = formula.streamFreeVariables()
+				.unordered()
+				.parallel()
+				.collect(Collectors.toSet());
+
+			int counter = boundVars.size() + freeVars.size() + 1;
+
+			Map<QBF, String> gates = new HashMap<>();
+
+			QBF output;
+
+			void setGateID(QBF gate) {
+				gates.putIfAbsent(
+					gate,
+					Integer.toString(counter++));
+			}
+
+			String getGateID(QBF gate) {
+				return gate.isNegation()
+					? "-" + gates.get(((Not) gate).subformula)
+					: gates.get(gate);
+			}
+
+			void setOutput(QBF formula) {
+				output = formula;
+				setGateID(output);
+			}
+
+			void appendPrefix() {
+				buffer.append(formula.streamPrefix()
+					.peek(q -> {
+						Quantifier quantifier = (Quantifier) q;
+						if (!quantifier.subformula.isQuantifier())
+							setOutput(quantifier.subformula);
+					})
+					.map(q -> q.apply(
+						f -> f.variables.stream()
+							.collect(Collectors.joining(", ", "forall(", ")")),
+						e -> e.variables.stream()
+							.collect(Collectors.joining(", ", "exists(", ")"))
+						))
+					.collect(Collectors.joining("\n")));
+				buffer.append("\n");
+			}
+
+			void appendOutput() {
+				buffer.append("output(");
+				buffer.append(getGateID(output));
+				buffer.append(")\n");
+			}
+
+			void appendGate(QBF gate) {
+				Function<QBF, String> illegalArgument = f -> {
+					throw new IllegalArgumentException("not a gate");
+				};
+
+				BiFunction<String, Gate, String> buildGate =
+					(sym, g) ->
+						sym + "("
+						+ g.subformulas.stream()
+							.map(this::getGateID)
+							.collect(Collectors.joining(", "))
+						+ ")";
+
+				BiFunction<String, Quantifier, String> buildQuantifier =
+					(sym, q) ->
+						sym + "("
+						+ q.variables.stream()
+							.collect(Collectors.joining(", "))
+						+ "; "
+						+ getGateID(q.subformula)
+						+ ")";
+
+				setGateID(gate);
+
+				buffer.append(getGateID(gate));
+				buffer.append(" = ");
+				buffer.append(gate.apply(
+					(True t) -> "and()",
+					(False f) -> "or()",
+					(Literal lit) -> illegalArgument.apply(lit),
+					(Not not) -> illegalArgument.apply(not),
+					(And and) -> buildGate.apply("and", and),
+					(Or or) -> buildGate.apply("or", or),
+					(ForAll forall) -> buildQuantifier.apply("forall", forall),
+					(Exists exists) -> buildQuantifier.apply("exists", exists)
+				));
+				buffer.append("\n");
+			}
+
+			void appendGates(QBF formula) {
+				if (formula != output && gates.containsKey(formula)) return;
+
+				Consumer<Gate> appendGate = g -> {
+						g.subformulas.forEach(this::appendGates);
+						appendGate(g);
+				};
+
+				Consumer<Quantifier> appendQuantifier = q -> {
+					appendGates(q.subformula);
+					appendGate(q);
+				};
+
+				formula.accept(
+					t -> appendGate(t),
+					f -> appendGate(f),
+					lit -> gates.putIfAbsent(lit, lit.variable),
+					not -> appendGates(not.subformula),
+					and -> appendGate.accept(and),
+					or -> appendGate.accept(or),
+					forall -> appendQuantifier.accept(forall),
+					exists -> appendQuantifier.accept(exists)
+				);
+			}
+
+			void prependHeader() {
+				buffer.insert(0,
+					"#QCIR-G14"
+					+ (isCleansed ? " " + Integer.toString(counter - 2) : "")
+					+ "\n");
+			}
+
+			Writer() {
+				appendPrefix();
+				appendOutput();
+				appendGates(output);
+				prependHeader();
+			}
+		}
+
+		try (BufferedWriter bw = Files.newBufferedWriter(Paths.get(fileName))) {
+			bw.append(new Writer().buffer);
+		}
+	}
+
+	public static void writeParallel(QBF formula, String fileName, boolean isCleansed)
+		throws IOException {
+
+		class Writer {
+			StringBuffer buffer = new StringBuffer();
+
+			Set<String> boundVars = formula.streamBoundVariables()
+				.unordered()
+				.parallel()
+				.collect(Collectors.toSet());
+
+			Set<String> freeVars = formula.streamFreeVariables()
+				.unordered()
+				.parallel()
+				.collect(Collectors.toSet());
+
+			AtomicInteger counter =
+				new AtomicInteger(boundVars.size() + freeVars.size() + 1);
+
+			Map<QBF, String> gates = new ConcurrentHashMap<>();
+
+			QBF output;
+
+			void setGateID(QBF gate) {
+				gates.putIfAbsent(
+					gate,
+					Integer.toString(counter.getAndIncrement()));
+			}
+
+			String getGateID(QBF gate) {
+				return gate.isNegation()
+					? "-" + gates.get(((Not) gate).subformula)
+					: gates.get(gate);
+			}
+
+			void setOutput(QBF formula) {
+				output = formula;
+				setGateID(output);
+			}
+
+			void appendPrefix() {
+				buffer.append(formula.streamPrefix()
+					.peek(q -> {
+						Quantifier quantifier = (Quantifier) q;
+						if (!quantifier.subformula.isQuantifier())
+							setOutput(quantifier.subformula);
+					})
+					.map(q -> q.apply(
+						f -> f.variables.stream()
+							.collect(Collectors.joining(", ", "forall(", ")")),
+						e -> e.variables.stream()
+							.collect(Collectors.joining(", ", "exists(", ")"))
+						))
+					.collect(Collectors.joining("\n")) + "\n");
+			}
+
+			void appendOutput() {
+				buffer.append("output(");
+				buffer.append(getGateID(output));
+				buffer.append(")\n");
+			}
+
+			void appendGate(QBF gate) {
+				Function<QBF, String> illegalArgument = f -> {
+					throw new IllegalArgumentException("not a gate");
+				};
+
+				BiFunction<String, Gate, String> buildGate =
+					(sym, g) ->
+						sym + "("
+						+ g.subformulas.stream()
+							.map(this::getGateID)
+							.collect(Collectors.joining(", "))
+						+ ")";
+
+				BiFunction<String, Quantifier, String> buildQuantifier =
+					(sym, q) ->
+						sym + "("
+						+ q.variables.stream()
+							.collect(Collectors.joining(", "))
+						+ "; "
+						+ getGateID(q.subformula)
+						+ ")";
+
+				setGateID(gate);
+
+				buffer.append(
+					getGateID(gate)
+					+ " = "
+					+ gate.apply(
+						t -> "and()",
+						f -> "or()",
+						lit -> illegalArgument.apply(lit),
+						not -> illegalArgument.apply(not),
+						and -> buildGate.apply("and", and),
+						or -> buildGate.apply("or", or),
+						forall -> buildQuantifier.apply("forall", forall),
+						exists -> buildQuantifier.apply("exists", exists))
+					+ "\n"
+				);
+			}
+
+			void appendGates(QBF formula) {
+				if (formula != output && gates.containsKey(formula)) return;
+
+				Consumer<Gate> appendGate = g -> {
+						g.subformulas
+							.stream()
+							.unordered()
+							.parallel()
+							.forEach(this::appendGates);
+						appendGate(g);
+				};
+
+				Consumer<Quantifier> appendQuantifier = q -> {
+					appendGates(q.subformula);
+					appendGate(q);
+				};
+
+				formula.accept(
+					t -> appendGate(t),
+					f -> appendGate(f),
+					lit -> gates.putIfAbsent(lit, lit.variable),
+					not -> appendGates(not.subformula),
+					and -> appendGate.accept(and),
+					or -> appendGate.accept(or),
+					forall -> appendQuantifier.accept(forall),
+					exists -> appendQuantifier.accept(exists)
+				);
+			}
+
+			void prependHeader() {
+				buffer.insert(0,
+					"#QCIR-G14"
+					+ (isCleansed ? " " + Integer.toString(counter.get() - 2) : "")
+					+ "\n");
+			}
+
+			Writer() {
+				appendPrefix();
+				appendOutput();
+				appendGates(output);
+				prependHeader();
+			}
+		}
+
+		try (BufferedWriter bw = Files.newBufferedWriter(Paths.get(fileName))) {
+			bw.append(new Writer().buffer);
+		}
 	}
 }
