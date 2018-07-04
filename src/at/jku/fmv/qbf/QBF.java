@@ -560,27 +560,27 @@ public abstract class QBF {
 		);
 	}
 
-	public Stream<String> streamBoundedVariables() {
+	public Stream<String> streamBoundVariables() {
 		return this.apply(
 			(True t) -> Stream.empty(),
 			(False f) -> Stream.empty(),
 			(Literal lit) -> Stream.empty(),
 			(Not not) ->
-				not.subformula.streamBoundedVariables(),
+				not.subformula.streamBoundVariables(),
 			(And and) ->
 				and.subformulas.stream()
-					.flatMap(QBF::streamBoundedVariables),
+					.flatMap(QBF::streamBoundVariables),
 			(Or or) ->
 				or.subformulas.stream()
-					.flatMap(QBF::streamBoundedVariables),
+					.flatMap(QBF::streamBoundVariables),
 			(ForAll forall) ->
 				Stream.concat(
 					forall.variables.stream(),
-					forall.subformula.streamBoundedVariables()),
+					forall.subformula.streamBoundVariables()),
 			(Exists exists) ->
 				Stream.concat(
 					exists.variables.stream(),
-					exists.subformula.streamBoundedVariables())
+					exists.subformula.streamBoundVariables())
 		);
 	}
 

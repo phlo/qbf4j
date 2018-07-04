@@ -280,8 +280,8 @@ class QBFTest {
 	}
 
 	@Test
-	@DisplayName("streamBoundedVariables")
-	void test_streamBoundedVariables() {
+	@DisplayName("streamBoundVariables")
+	void test_streamBoundVariables() {
 		QBF lit1 = new Literal(x1);
 		QBF lit2 = new Literal(x2);
 		QBF lit3 = new Literal(x3);
@@ -295,35 +295,35 @@ class QBFTest {
 
 		assertEquals(
 			"",
-			joinCommaDelimited(lit1.streamBoundedVariables()));
+			joinCommaDelimited(lit1.streamBoundVariables()));
 
 		assertEquals(
 			"",
-			joinCommaDelimited(and.streamBoundedVariables()));
+			joinCommaDelimited(and.streamBoundVariables()));
 
 		assertEquals(
 			"",
-			joinCommaDelimited(or.streamBoundedVariables()));
+			joinCommaDelimited(or.streamBoundVariables()));
 
 		assertEquals(
 			"",
-			joinCommaDelimited(not.streamBoundedVariables()));
+			joinCommaDelimited(not.streamBoundVariables()));
 
 		assertEquals(
 			"x2",
-			joinCommaDelimited(forall.streamBoundedVariables()));
+			joinCommaDelimited(forall.streamBoundVariables()));
 
 		assertEquals(
 			"x1,x2",
-			joinCommaDelimited(exists.streamBoundedVariables()));
+			joinCommaDelimited(exists.streamBoundVariables()));
 
 		assertEquals(
 			"x2,x1,x2,x2",
-			joinCommaDelimited(unclean.streamBoundedVariables()));
+			joinCommaDelimited(unclean.streamBoundVariables()));
 
 		assertEquals(
 			"p,q,r,s,t,q',r',q'',r''",
-			joinCommaDelimited(lncsExample.streamBoundedVariables()));
+			joinCommaDelimited(lncsExample.streamBoundVariables()));
 	}
 
 	@Test
