@@ -205,7 +205,7 @@ public final class QCIR {
 					throw new IllegalArgumentException("not a gate");
 				};
 
-				BiFunction<String, Gate, String> buildGate =
+				BiFunction<String, MultiaryOperator, String> buildGate =
 					(sym, g) ->
 						sym + "("
 						+ g.subformulas.stream()
@@ -242,7 +242,7 @@ public final class QCIR {
 			void appendGates(QBF formula) {
 				if (formula != output && gates.containsKey(formula)) return;
 
-				Consumer<Gate> appendGate = g -> {
+				Consumer<MultiaryOperator> appendGate = g -> {
 						g.subformulas.forEach(this::appendGates);
 						appendGate(g);
 				};
@@ -351,7 +351,7 @@ public final class QCIR {
 					throw new IllegalArgumentException("not a gate");
 				};
 
-				BiFunction<String, Gate, String> buildGate =
+				BiFunction<String, MultiaryOperator, String> buildGate =
 					(sym, g) ->
 						sym + "("
 						+ g.subformulas.stream()
@@ -389,7 +389,7 @@ public final class QCIR {
 			void appendGates(QBF formula) {
 				if (formula != output && gates.containsKey(formula)) return;
 
-				Consumer<Gate> appendGate = g -> {
+				Consumer<MultiaryOperator> appendGate = g -> {
 						g.subformulas
 							.stream()
 							.unordered()

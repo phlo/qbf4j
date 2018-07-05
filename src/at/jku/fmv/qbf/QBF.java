@@ -153,11 +153,21 @@ public abstract class QBF {
 		}
 	}
 
-	public static final class Not extends QBF {
-
-		private final int hash;
+	public static abstract class UnaryOperator extends QBF {
 
 		public final QBF subformula;
+
+		private UnaryOperator(QBF subformula) {
+			if (subformula == null)
+				throw new IllegalArgumentException("missing subformula");
+
+			this.subformula = subformula;
+		}
+	}
+
+	public static final class Not extends UnaryOperator {
+
+		private final int hash;
 
 		public void accept(	Consumer<True> t,
 							Consumer<False> f,
@@ -178,20 +188,16 @@ public abstract class QBF {
 							Function<Exists, T> exists ) { return not.apply(this); }
 
 		public Not(QBF subformula) {
-			if (subformula == null)
-				throw new IllegalArgumentException("missing subformula");
-
-			this.subformula = subformula;
-
+			super(subformula);
 			this.hash = this.hash();
 		}
 	}
 
-	public static abstract class Gate extends QBF {
+	public static abstract class MultiaryOperator extends QBF {
 
 		public final List<QBF> subformulas;
 
-		private Gate(List<QBF> subformulas) {
+		private MultiaryOperator(List<QBF> subformulas) {
 			if (subformulas == null || subformulas.size() < 2)
 				throw new IllegalArgumentException("missing subformulas");
 
@@ -199,7 +205,7 @@ public abstract class QBF {
 		}
 	}
 
-	public static final class And extends Gate {
+	public static final class And extends MultiaryOperator {
 
 		private final int hash;
 
@@ -229,7 +235,7 @@ public abstract class QBF {
 		public And(QBF... subformulas) { this(Arrays.asList(subformulas)); }
 	}
 
-	public static final class Or extends Gate {
+	public static final class Or extends MultiaryOperator {
 
 		private final int hash;
 
@@ -259,17 +265,16 @@ public abstract class QBF {
 		public Or(QBF... subformulas) { this(Arrays.asList(subformulas)); }
 	}
 
-	public static abstract class Quantifier extends QBF {
-		public final QBF subformula;
+	public static abstract class Quantifier extends UnaryOperator {
+
 		public final Set<String> variables;
 
 		private Quantifier(QBF subformula, Set<String> variables) {
-			if (subformula == null)
-				throw new IllegalArgumentException("missing subformula");
+			super(subformula);
+
 			if (variables == null || variables.isEmpty())
 				throw new IllegalArgumentException("missing variable");
 
-			this.subformula = subformula;
 			this.variables = Collections.unmodifiableSet(variables);
 		}
 	}
