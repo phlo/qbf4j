@@ -12,7 +12,7 @@ import at.jku.fmv.qbf.QBF;
 import at.jku.fmv.qbf.QBF.*;
 
 @DisplayName("ShiftingStrategy")
-class ShiftingStrategyTest {
+public class ShiftingStrategyTest {
 
 	@Test
 	@DisplayName("apply")

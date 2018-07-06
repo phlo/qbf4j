@@ -18,7 +18,7 @@ import at.jku.fmv.qbf.QBF;
 import at.jku.fmv.qbf.QBF.*;
 
 @DisplayName("QBF")
-class QBFTest {
+public class QBFTest {
 
 	// variables
 	static final String x1 = "x1";
@@ -27,7 +27,7 @@ class QBFTest {
 	static final String x4 = "x4";
 
 	// LNCS paper example: ∃p (∀q ∃r ∀s ∃t ϕ0 ∧ ∀q' ∃r' ϕ1 ∧ ¬∀q'' ∃r'' ϕ2)
-	static final QBF lncsExample =
+	public static final QBF lncs =
 		new Exists(
 			new And(
 				new ForAll(
@@ -51,7 +51,20 @@ class QBFTest {
 							"r''"),
 						"q''"))),
 			"p");
-	static final QBF lncsExampleNNF = lncsExample.toNNF();
+	public static final QBF lncsNNF = lncs.toNNF();
+
+	// G14 file format specification example: ∀z: (z ∨ ∃x1,x2: (x1 ∧ x2 ∧ z))
+	public static final QBF g14 =
+		new ForAll(
+			new Or(
+				new Literal("z"),
+				new Exists(
+					new And(
+						new Literal(x1),
+						new Literal(x2),
+						new Literal("z")),
+					x1, x2)),
+			"z");
 
 	private static String joinCommaDelimited(Stream<String> stream) {
 		return stream.collect(Collectors.joining(","));
@@ -234,7 +247,7 @@ class QBFTest {
 
 		assertEquals(
 			"p,q,r,s,t,ϕ0,q',r',ϕ1,q'',r'',ϕ2",
-			joinCommaDelimited(lncsExample.streamVariables()));
+			joinCommaDelimited(lncs.streamVariables()));
 	}
 
 	@Test
@@ -276,7 +289,7 @@ class QBFTest {
 
 		assertEquals(
 			"ϕ0,ϕ1,ϕ2",
-			joinCommaDelimited(lncsExample.streamFreeVariables()));
+			joinCommaDelimited(lncs.streamFreeVariables()));
 	}
 
 	@Test
@@ -323,17 +336,17 @@ class QBFTest {
 
 		assertEquals(
 			"p,q,r,s,t,q',r',q'',r''",
-			joinCommaDelimited(lncsExample.streamBoundVariables()));
+			joinCommaDelimited(lncs.streamBoundVariables()));
 	}
 
 	@Test
 	@DisplayName("streamPrefix")
 	void test_streamPrefix() {
-		QBF sub1 = ((And) ((Exists) lncsExampleNNF).subformula).subformulas.get(0);
-		QBF sub2 = ((And) ((Exists) lncsExampleNNF).subformula).subformulas.get(1);
-		QBF sub3 = ((And) ((Exists) lncsExampleNNF).subformula).subformulas.get(2);
+		QBF sub1 = ((And) ((Exists) lncsNNF).subformula).subformulas.get(0);
+		QBF sub2 = ((And) ((Exists) lncsNNF).subformula).subformulas.get(1);
+		QBF sub3 = ((And) ((Exists) lncsNNF).subformula).subformulas.get(2);
 
-		assertEquals(lncsExample.prefixToString(), "∃p");
+		assertEquals(lncs.prefixToString(), "∃p");
 		assertEquals(sub1.prefixToString(), "∀q ∃r ∀s ∃t");
 		assertEquals(sub2.prefixToString(), "∀q' ∃r'");
 		assertEquals(sub3.prefixToString(), "∃q'' ∀r''");
@@ -348,14 +361,14 @@ class QBFTest {
 				.collect(Collectors.toList());
 
 		// LNCS paper example
-		List<String> qpaths = qpathsToString.apply(lncsExampleNNF);
+		List<String> qpaths = qpathsToString.apply(lncsNNF);
 
 		assertEquals(3, qpaths.size());
 		assertEquals(qpaths.get(0), "∃p ∀q ∃r ∀s ∃t");
 		assertEquals(qpaths.get(1), "∃p ∀q' ∃r'");
 		assertEquals(qpaths.get(2), "∃p,q'' ∀r''");
 
-		And and = (And) ((Exists) lncsExampleNNF).subformula;
+		And and = (And) ((Exists) lncsNNF).subformula;
 		qpaths = qpathsToString.apply(and);
 
 		assertEquals(3, qpaths.size());
@@ -390,7 +403,7 @@ class QBFTest {
 			l.stream().map(QBF::prefixToString).collect(Collectors.toList());
 
 		// LNCS paper example
-		List<QBF> qpaths = lncsExampleNNF.getQPaths();
+		List<QBF> qpaths = lncsNNF.getQPaths();
 
 		List<String> criticalPaths = criticalPathsToString.apply(QBF.getCriticalPaths(qpaths));
 
@@ -429,8 +442,8 @@ class QBFTest {
 	@Test
 	@DisplayName("getSkeleton")
 	void test_getSkeleton() {
-		assertEquals("(ϕ0 ∧ ϕ1 ∧ -ϕ2)", lncsExample.getSkeleton().toString());
-		assertEquals("(ϕ0 ∧ ϕ1 ∧ -ϕ2)", lncsExampleNNF.getSkeleton().toString());
+		assertEquals("(ϕ0 ∧ ϕ1 ∧ -ϕ2)", lncs.getSkeleton().toString());
+		assertEquals("(ϕ0 ∧ ϕ1 ∧ -ϕ2)", lncsNNF.getSkeleton().toString());
 
 		QBF qbf = new ForAll(new Exists(new Literal(x3), x2), x1);
 		assertEquals("x3", qbf.getSkeleton().toString());
@@ -534,7 +547,7 @@ class QBFTest {
 		variables.put("ϕ0", "1");
 		variables.put("ϕ1", "2");
 		variables.put("ϕ2", "3");
-		result = lncsExample.rename(variables);
+		result = lncs.rename(variables);
 
 		assertEquals(
 			"p,q,r,s,t,1,q',r',2,q'',r'',3",
@@ -629,11 +642,11 @@ class QBFTest {
 
 		assertEquals(
 			"(1 ∧ 2 ∧ -3)",
-			lncsExample.cleanse().toString());
+			lncs.cleanse().toString());
 
 		assertEquals(
 			"(1 ∧ 2 ∧ -3)",
-			lncsExampleNNF.cleanse().toString());
+			lncsNNF.cleanse().toString());
 	}
 
 	@Test
