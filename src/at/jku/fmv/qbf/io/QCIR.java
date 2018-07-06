@@ -4,7 +4,6 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -138,7 +137,7 @@ public final class QCIR {
 		return formula;
 	}
 
-	public static void write(QBF formula, String fileName, boolean isCleansed)
+	public static void write(QBF formula, Path file, boolean isCleansed)
 		throws IOException {
 
 		class Writer {
@@ -191,7 +190,12 @@ public final class QCIR {
 							.collect(Collectors.joining(", ", "exists(", ")"))
 						))
 					.collect(Collectors.joining("\n")));
-				buffer.append("\n");
+
+				// propositional formula
+				if (output == null)
+					setOutput(formula);
+				else
+					buffer.append("\n");
 			}
 
 			void appendOutput() {
@@ -279,12 +283,12 @@ public final class QCIR {
 			}
 		}
 
-		try (BufferedWriter bw = Files.newBufferedWriter(Paths.get(fileName))) {
+		try (BufferedWriter bw = Files.newBufferedWriter(file)) {
 			bw.append(new Writer().buffer);
 		}
 	}
 
-	public static void writeParallel(QBF formula, String fileName, boolean isCleansed)
+	public static void writeParallel(QBF formula, Path file, boolean isCleansed)
 		throws IOException {
 
 		class Writer {
@@ -430,7 +434,7 @@ public final class QCIR {
 			}
 		}
 
-		try (BufferedWriter bw = Files.newBufferedWriter(Paths.get(fileName))) {
+		try (BufferedWriter bw = Files.newBufferedWriter(file)) {
 			bw.append(new Writer().buffer);
 		}
 	}

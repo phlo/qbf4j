@@ -72,7 +72,7 @@ public class Benchmarks {
 	@Warmup(iterations = 0)
 	@OutputTimeUnit(TimeUnit.SECONDS)
 	public void writeQCIR(Variables v) throws IOException {
-		QCIR.write(v.formula, "/tmp/" + v.file.getFileName(), true);
+		QCIR.write(v.formula, Paths.get("/tmp/" + v.file.getFileName()), true);
 	}
 
 	@Benchmark

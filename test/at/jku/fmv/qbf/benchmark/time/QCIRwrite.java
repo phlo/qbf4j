@@ -1,6 +1,7 @@
 package at.jku.fmv.qbf.benchmark.time;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 
 import org.openjdk.jmh.annotations.Benchmark;
@@ -26,7 +27,10 @@ public class QCIRwrite {
 	@Benchmark
 	@OutputTimeUnit(TimeUnit.SECONDS)
 	public void writeQCIRParallel(Variables v) throws IOException {
-		QCIR.writeParallel(v.formula, "/tmp/" + v.file.getFileName(), true);
+		QCIR.writeParallel(
+			v.formula,
+			Paths.get("/tmp/" + v.file.getFileName()),
+			true);
 	}
 
 	public static void main(String[] args) throws Exception {

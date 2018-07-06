@@ -6,8 +6,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.stream.Collectors;
+import java.util.Arrays;
+import java.util.List;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,95 +17,105 @@ import at.jku.fmv.qbf.*;
 import at.jku.fmv.qbf.io.QCIR;
 
 @DisplayName("QCIR")
-class QCIRTest {
+public class QCIRTest {
 
-	private static String examplesDir = "test/formulas/";
+	static Path lncsFile;
+	static List<String> lncs = Arrays.asList(new String[] {
+		"#QCIR-G14"
+		, "exists(p)"
+		, "output(ϕ)"
+		, "ϕ0_4 = exists(t; ϕ0)"
+		, "ϕ0_3 = forall(s; ϕ0_4"
+		, "ϕ0_2 = exists(r; ϕ0_3"
+		, "ϕ0_1 = forall(q; ϕ0_2"
+		, "ϕ1_2 = exists(r'; ϕ1)"
+		, "ϕ1_1 = forall(q'; ϕ1_2)"
+		, "ϕ2_2 = exists(r''; ϕ2)"
+		, "ϕ2_1 = forall(q''; ϕ2_2)"
+		, "ϕ = and(ϕ0_1, ϕ1_1, -ϕ2_1)"
+	});
 
-	private static Path lncsPath = Paths.get(examplesDir + "lncs.qcir");
-	private static Path g14Path = Paths.get(examplesDir + "g14.qcir");
-	private static Path g14CleansedPath = Paths.get(examplesDir + "g14-cleansed.qcir");
+	static List<String> lncsOut = Arrays.asList(new String[] {
+		"#QCIR-G14"
+		, "exists(p)"
+		, "output(13)"
+		, "14 = exists(t; ϕ0)"
+		, "15 = forall(s; 14)"
+		, "16 = exists(r; 15)"
+		, "17 = forall(q; 16)"
+		, "18 = exists(r'; ϕ1)"
+		, "19 = forall(q'; 18)"
+		, "20 = exists(r''; ϕ2)"
+		, "21 = forall(q''; 20)"
+		, "13 = and(17, 19, -21)"
+	});
+
+	static List<String> lncsCleansed = Arrays.asList(new String[] {
+		"#QCIR-G14 4"
+		, "output(4)"
+		, "4 = and(1, 2, -3)"
+	});
+
+	static Path g14File;
+	static List<String> g14 = Arrays.asList(new String[] {
+		"#QCIR-G14"
+		, "forall(z)"
+		, "output(4)"
+		, "5 = and(x1, x2, z)"
+		, "6 = exists(x1, x2; 5)"
+		, "4 = or(z, 6)"
+	});
+
+	static List<String> g14Cleansed = Arrays.asList(new String[] {
+		"#QCIR-G14 6"
+		, "forall(1)"
+		, "output(4)"
+		, "5 = and(2, 3, 1)"
+		, "6 = exists(2, 3; 5)"
+		, "4 = or(1, 6)"
+	});
+
+	@BeforeAll
+	static void setup() throws IOException {
+		Path tmpDir = Files.createTempDirectory("qbf");
+		tmpDir.toFile().deleteOnExit();
+
+		lncsFile = Paths.get(tmpDir.toString(), "lncs.qcir");
+		lncsFile.toFile().deleteOnExit();
+
+		g14File = Paths.get(tmpDir.toString(), "g14.qcir");
+		g14File.toFile().deleteOnExit();
+	}
 
 	@Test
 	@DisplayName("read")
-	void test_read() {
-		QBF formula;
+	void test_read() throws IOException {
+		Files.write(g14File, g14);
+		assertEquals(QBFTest.g14, QCIR.read(g14File));
 
-		try {
+		Files.write(g14File, g14Cleansed);
+		assertEquals(QBFTest.g14.cleanse(), QCIR.read(g14File));
 
-			formula = QCIR.read(g14Path);
-			assertEquals(
-				"∀z: (z ∨ ∃x1,x2: (x1 ∧ x2 ∧ z))",
-				formula.toString());
+		Files.write(lncsFile, lncs);
+		assertEquals(QBFTest.lncs, QCIR.read(lncsFile));
 
-			formula = QCIR.read(g14CleansedPath);
-			assertEquals(
-				"∀3: (3 ∨ ∃1,2: (1 ∧ 2 ∧ 3))",
-				formula.toString());
-
-			formula = QCIR.read(lncsPath);
-			assertEquals(
-				"∃p: (∀q: ∃r: ∀s: ∃t: ϕ0 ∧ ∀q1: ∃r1: ϕ1 ∧ -∀q2: ∃r2: ϕ2)",
-				formula.toString());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		Files.write(lncsFile, lncsCleansed);
+		assertEquals(QBFTest.lncs.cleanse(), QCIR.read(lncsFile));
 	}
 
 	@Test
 	@DisplayName("write")
-	void test_write() {
-		Path tmpFile;
-		QBF formula;
+	void test_write() throws IOException {
+		QCIR.write(QBFTest.g14, g14File, false);
+		assertEquals(g14, Files.readAllLines(g14File));
 
-		String tmpDir = "/tmp/";
+		QCIR.write(QBFTest.g14.cleanse(), g14File, true);
+		assertEquals(g14Cleansed, Files.readAllLines(g14File));
 
-		try {
-			formula = QCIR.read(g14Path);
-			tmpFile = Paths.get(tmpDir + g14Path.getFileName().toString());
-			QCIR.write(formula, tmpFile.toAbsolutePath().toString(), false);
-			assertEquals(
-				"#QCIR-G14\n"
-				+ "forall(z)\n"
-				+ "output(4)\n"
-				+ "5 = and(x1, x2, z)\n"
-				+ "6 = exists(x1, x2; 5)\n"
-				+ "4 = or(z, 6)\n",
-				Files.readAllLines(tmpFile).stream()
-					.collect(Collectors.joining("\n")) + "\n");
+		QCIR.write(QBFTest.lncs, lncsFile, false);
+		assertEquals(lncsOut, Files.readAllLines(lncsFile));
 
-			formula = QCIR.read(g14CleansedPath);
-			tmpFile = Paths.get(tmpDir + g14CleansedPath.getFileName().toString());
-			QCIR.write(formula, tmpFile.toAbsolutePath().toString(), true);
-			assertEquals(
-				"#QCIR-G14 6\n"
-				+ "forall(3)\n"
-				+ "output(4)\n"
-				+ "5 = and(1, 2, 3)\n"
-				+ "6 = exists(1, 2; 5)\n"
-				+ "4 = or(3, 6)\n",
-				Files.readAllLines(tmpFile).stream()
-					.collect(Collectors.joining("\n")) + "\n");
-
-			formula = QCIR.read(lncsPath);
-			tmpFile = Paths.get(tmpDir + lncsPath.getFileName().toString());
-			QCIR.write(formula, tmpFile.toAbsolutePath().toString(), true);
-			assertEquals(
-					"#QCIR-G14 21\n"
-					+ "exists(p)\n"
-					+ "output(13)\n"
-					+ "14 = exists(t; ϕ0)\n"
-					+ "15 = forall(s; 14)\n"
-					+ "16 = exists(r; 15)\n"
-					+ "17 = forall(q; 16)\n"
-					+ "18 = exists(r1; ϕ1)\n"
-					+ "19 = forall(q1; 18)\n"
-					+ "20 = exists(r2; ϕ2)\n"
-					+ "21 = forall(q2; 20)\n"
-					+ "13 = and(17, 19, -21)\n",
-				Files.readAllLines(tmpFile).stream()
-					.collect(Collectors.joining("\n")) + "\n");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		QCIR.write(QBFTest.lncs.cleanse(), lncsFile, true);
+		assertEquals(lncsCleansed, Files.readAllLines(lncsFile));
 	}
 }
