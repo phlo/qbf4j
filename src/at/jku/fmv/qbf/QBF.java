@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import at.jku.fmv.qbf.pcnf.CNFEncoder;
-import at.jku.fmv.qbf.prenexing.PrenexingStrategy;
+import at.jku.fmv.qbf.pnf.PrenexingStrategy;
 
 public abstract class QBF {
 

@@ -1,4 +1,4 @@
-package at.jku.fmv.qbf.prenexing;
+package at.jku.fmv.qbf.pnf;
 
 // ∃↓∀↑ - prioritize existential quantifiers
 public class ExistsDownForAllUp extends SimpleUpDownStrategy {

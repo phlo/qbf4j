@@ -1,4 +1,4 @@
-package at.jku.fmv.qbf.prenexing;
+package at.jku.fmv.qbf.pnf;
 
 // ∀↓∃↓
 public class ForAllDownExistsDown extends SimpleUpDownStrategy {

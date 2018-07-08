@@ -1,4 +1,4 @@
-package at.jku.fmv.qbf.prenexing;
+package at.jku.fmv.qbf.pnf;
 
 import static org.junit.jupiter.api.Assertions.*;
 

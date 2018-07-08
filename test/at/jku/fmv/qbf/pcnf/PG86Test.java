@@ -8,7 +8,8 @@ import org.junit.jupiter.api.Test;
 import at.jku.fmv.qbf.QBF;
 import at.jku.fmv.qbf.QBF.*;
 import at.jku.fmv.qbf.QBFTest;
-import at.jku.fmv.qbf.prenexing.*;
+import at.jku.fmv.qbf.pcnf.PG86;
+import at.jku.fmv.qbf.pnf.*;
 
 @DisplayName("PG86")
 class PG86Test {

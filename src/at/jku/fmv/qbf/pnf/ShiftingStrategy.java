@@ -1,4 +1,4 @@
-package at.jku.fmv.qbf.prenexing;
+package at.jku.fmv.qbf.pnf;
 
 import java.util.HashSet;
 import java.util.List;
