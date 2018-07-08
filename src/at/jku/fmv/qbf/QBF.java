@@ -16,6 +16,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import at.jku.fmv.qbf.pcnf.CNFEncoder;
 import at.jku.fmv.qbf.prenexing.PrenexingStrategy;
 
 public abstract class QBF {
@@ -407,6 +408,14 @@ public abstract class QBF {
 			forall -> false, exists -> false
 		);
 	public boolean isOr() { return isOr.test(this); }
+
+	public static final Predicate<QBF> isCNF = formula ->
+		formula.isAnd()
+			&& ((And) formula).subformulas.stream().allMatch(f ->
+				f.isLiteral()
+				|| (f.isOr() && ((Or) f).subformulas.stream()
+					.allMatch(QBF::isLiteral)));
+	public boolean isCNF() { return isCNF.test(this); }
 
 	private enum HashID {
 		FALSE,
@@ -903,6 +912,10 @@ public abstract class QBF {
 
 	public QBF toPNF(PrenexingStrategy strategy) {
 		return strategy.apply(this.toNNF());
+	}
+
+	public QBF toPCNF(PrenexingStrategy strategy, CNFEncoder encoder) {
+		return encoder.apply(toPNF(strategy));
 	}
 
 	public static String quantifierToString(QBF formula) {
