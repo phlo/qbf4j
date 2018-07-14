@@ -4,7 +4,6 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,10 +14,12 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import at.jku.fmv.qbf.QBF;
 import at.jku.fmv.qbf.QBF.*;
+import at.jku.fmv.qbf.io.util.*;
 
 /**
  *
@@ -33,106 +34,142 @@ public final class QCIR {
 
 	public static QBF read(Path file) throws IOException {
 
-		// TODO: ignore comments?
-//		List<String> lines = Files.lines(file).map(String::trim).collect(Collectors.toList());
 		List<String> lines = Files.readAllLines(file);
+
+		if (lines.isEmpty())
+			throw new ParserException(file, "file is empty");
+
+		StringTokenizer splitComa = new StringTokenizer(',');
+		StringTokenizer splitEquals = new StringTokenizer('=');
+		StringTokenizer splitLPar = new StringTokenizer('(');
+		StringTokenizer splitRPar = new StringTokenizer(')');
+		StringTokenizer splitSemiColon = new StringTokenizer(';');
 
 		Map<String, QBF> subformulas = new HashMap<String, QBF>();
 
 		BiFunction<String, QBF, QBF> parseGate = (str, sub) -> {
 
-			Function<String, Stream<String>> streamOperands = lst -> Stream.of(lst.split(",")).map(String::trim);
+			Function<String, Stream<String>> streamOperands = lst ->
+				splitComa.stream(lst)
+					.map(String::trim);
 
 			Function<Stream<String>, List<QBF>> getOperands = s -> {
+
 				Function<String, QBF> getLiteralOrFormula = id ->
-					subformulas.containsKey(id) ?
-						subformulas.get(id) :
-						new Literal(id);
+					subformulas.containsKey(id)
+						? subformulas.get(id)
+						: new Literal(id);
 				return
-					s.map(id ->
-						id.startsWith("-") ?
-							new Not(getLiteralOrFormula.apply(id.substring(1))) :
-							getLiteralOrFormula.apply(id))
+					s.map(id -> id.startsWith("-")
+						? new Not(getLiteralOrFormula.apply(id.substring(1)))
+						: getLiteralOrFormula.apply(id))
 					.collect(Collectors.toList());
 			};
 
-			Function<String, List<QBF>> parseOperands = streamOperands.andThen(getOperands);
+			Function<String, List<QBF>> parseOperands =
+				streamOperands.andThen(getOperands);
 
-			String[] l = str.split("[()]");
-			String op = l[0].trim().toLowerCase();
-			switch (op) {
+			List<String> args = splitLPar.stream(str)
+				.flatMap(splitRPar::stream)
+				.map(String::trim)
+				.collect(Collectors.toList());
+
+			if (args.size() < 2)
+				throw new IllegalArgumentException("missing operands");
+
+			switch (args.get(0)) {
 				case "and":
-					List<QBF> operands = parseOperands.apply(l[1]);
-					return operands.size() > 1 ?
-						new And(parseOperands.apply(l[1])) :
-						operands.isEmpty() ? QBF.True : operands.get(0);
+					List<QBF> operands = parseOperands.apply(args.get(1));
+					return operands.size() > 1
+						? new And(operands)
+						: operands.isEmpty() ? QBF.True : operands.get(0);
 				case "or":
-					operands = parseOperands.apply(l[1]);
-					return operands.size() > 1 ?
-						new Or(parseOperands.apply(l[1])) :
-						operands.isEmpty() ? QBF.False : operands.get(0);
+					operands = parseOperands.apply(args.get(1));
+					return operands.size() > 1
+						? new Or(operands)
+						: operands.isEmpty() ? QBF.False : operands.get(0);
 				case "forall":
-					l = l[1].split(";");
+					args = splitSemiColon.stream(args.get(1))
+						.map(String::trim)
+						.collect(Collectors.toList());
 					return
 						new ForAll(
-							sub == null ? parseOperands.apply(l[1]).get(0) : sub,
-							streamOperands.apply(l[0]).collect(Collectors.toSet()));
+							sub == null
+								? parseOperands.apply(args.get(1)).get(0)
+								: sub,
+							streamOperands.apply(args.get(0))
+								.collect(Collectors.toSet()));
 				case "exists":
-					l = l[1].split(";");
+					args = splitSemiColon.stream(args.get(1))
+						.map(String::trim)
+						.collect(Collectors.toList());
 					return
 						new Exists(
-							sub == null ? parseOperands.apply(l[1]).get(0) : sub,
-							streamOperands.apply(l[0]).collect(Collectors.toSet()));
+							sub == null
+								? parseOperands.apply(args.get(1)).get(0)
+								: sub,
+							streamOperands.apply(args.get(0))
+								.collect(Collectors.toSet()));
 				default:
-					throw new IllegalArgumentException("unknown gate type '" + op + "'");
+					throw new IllegalArgumentException(
+						"unknown gate type '" + args.get(0) + "'");
 			}
 		};
 
 		Consumer<String> parseSubformula = line -> {
-			String[] l = line.split("=");
-			String id = l[0].trim();
+
+			List<String> args = splitEquals.stream(line)
+				.map(String::trim)
+				.collect(Collectors.toList());
+
+			if (args.size() < 2 || args.stream().anyMatch(String::isEmpty))
+				throw new ParserException(
+					file,
+					"illegal gate definition",
+					lines.indexOf(line) + 1);
 
 			try {
-				subformulas.put(id, parseGate.apply(l[1], null));
-			}
-			catch (IllegalArgumentException e) {
-				throw new IllegalArgumentException(
-					file.toFile() + ":" + (lines.indexOf(line) + 1) + ": error: " + e.getMessage());
+				subformulas.put(
+					args.get(0),
+					parseGate.apply(args.get(1), null));
+			} catch (IllegalArgumentException e) {
+				throw new ParserException(file, lines.indexOf(line) + 1, e);
 			}
 		};
 
-		// TODO: parse sequential (using a fast-forward index) or parallel (using CompletableFutures)
-		int[] lastLine = {1};
+		// find output
+		int outputIdx = IntStream.range(1, lines.size())
+			.parallel()
+			.filter(i -> lines.get(i).startsWith("output"))
+			.findAny()
+			.orElseThrow(() ->
+				new ParserException(file, "missing output"));
 
-		// parse prefix
-		List<String> prefix =
-			lines.stream()
-				.filter(line -> line.startsWith("forall") || line.startsWith("exists"))
-				.peek(line -> lastLine[0]++)
-				.collect(Collectors.toList());
-
-		// parse output
-		String output =
-			lines.stream()
-				.skip(lastLine[0])
-				.filter(line -> line.startsWith("output"))
-				.peek(line -> lastLine[0]++)
-				.map(line -> line.split("[()]")[1].trim())
-				.findAny()
-				.orElse("");
+		// parse output variable
+		String output = splitLPar.stream(lines.get(outputIdx))
+			.skip(1)
+			.flatMap(splitRPar::stream)
+			.findFirst()
+			.orElseThrow(() ->
+				new ParserException(file, "illegal output", outputIdx + 1));
 
 		// parse gates
 		lines.stream()
-			.skip(lastLine[0])
-			.filter(line -> !line.startsWith("#")) // past output section, just skip comments
-//			.filter(line -> line.matches("\\w+\\s+=.*")) // filter out gate definitions
+			.skip(outputIdx + 1)
+			.filter(s -> !s.isEmpty() && !s.startsWith("#"))
 			.forEach(parseSubformula);
 
+		// prepend prefix
 		// BUUUUUUHHH! ... reducing different types not supported
 		QBF formula = subformulas.get(output);
-		Collections.reverse(prefix);
-		for (String str : prefix)
-			formula = parseGate.apply(str, formula);
+		for (int i = outputIdx - 1; i >= 0; i--)
+			try {
+				String line = lines.get(i);
+				if (!line.isEmpty() && !line.startsWith("#"))
+					formula = parseGate.apply(line, formula);
+			} catch (IllegalArgumentException e) {
+				throw new ParserException(file, i + 1, e);
+			}
 
 		return formula;
 	}

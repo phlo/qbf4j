@@ -14,14 +14,14 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import at.jku.fmv.qbf.QBF;
+import at.jku.fmv.qbf.*;
 import at.jku.fmv.qbf.QBF.*;
-import at.jku.fmv.qbf.QBFTest;
+import at.jku.fmv.qbf.io.util.ParserException;
 
 @DisplayName("QDIMACS")
 public class QDIMACSTest {
 
-	public static Path file;
+	static Path file;
 
 	// ∃p (∀q ∃r ∀s ∃t ϕ0 ∧ ∀q' ∃r' ϕ1 ∧ ¬∀q'' ∃r'' ϕ2)
 	// ∃4 (∀5 ∃6 ∀7 ∃8  1 ∧ ∀9  ∃10  2 ∧ ¬∀11  ∃12   3)
@@ -127,43 +127,53 @@ public class QDIMACSTest {
 
 		// error: empty input file
 		Files.write(file, Collections.emptyList());
-		assertThrows(
-			IllegalArgumentException.class,
-			() -> QDIMACS.read(file));
+		assertEquals(
+			file.toString() + ": error: file is empty",
+			assertThrows(
+				ParserException.class,
+				() -> QDIMACS.read(file)).getMessage());
 
 		String illegal;
 
 		// error: only problem line
 		illegal = "p cnf 0 0\n";
 		Files.write(file, illegal.getBytes());
-		assertThrows(
-			IllegalArgumentException.class,
-			() -> QDIMACS.read(file));
+		assertEquals(
+			file.toString() + ": error: missing clauses",
+			assertThrows(
+				ParserException.class,
+				() -> QDIMACS.read(file)).getMessage());
 
 		// error: only prefix
 		illegal = "p cnf 1 0\n"
 				+ "e 1 0\n";
 		Files.write(file, illegal.getBytes());
-		assertThrows(
-			IllegalArgumentException.class,
-			() -> QDIMACS.read(file));
+		assertEquals(
+			file.toString() + ": error: missing clauses",
+			assertThrows(
+				ParserException.class,
+				() -> QDIMACS.read(file)).getMessage());
 
 		// error: illegal prefix (no variables)
 		illegal = "p cnf 1 1\n"
 				+ "e 0\n"
 				+ "1 0\n";
 		Files.write(file, illegal.getBytes());
-		assertThrows(
-			IllegalArgumentException.class,
-			() -> QDIMACS.read(file));
+		assertEquals(
+			file.toString() + ": 2: error: missing variables",
+			assertThrows(
+				ParserException.class,
+				() -> QDIMACS.read(file)).getMessage());
 
 		// error: illegal clause (no variables)
 		illegal = "p cnf 1 1\n"
 				+ "0\n";
 		Files.write(file, illegal.getBytes());
-		assertThrows(
-			IllegalArgumentException.class,
-			() -> QDIMACS.read(file));
+		assertEquals(
+			file.toString() + ": 2: error: missing variables",
+			assertThrows(
+				ParserException.class,
+				() -> QDIMACS.read(file)).getMessage());
 	}
 
 	@Test
@@ -179,8 +189,10 @@ public class QDIMACSTest {
 		assertEquals(propositionalQDIMACS, Files.readAllLines(file));
 
 		// error: not in PNF
-		assertThrows(
-			IllegalArgumentException.class,
-			() -> QDIMACS.write(QBFTest.lncs, file));
+		assertEquals(
+			"skeleton not in CNF",
+			assertThrows(
+				IllegalArgumentException.class,
+				() -> QDIMACS.write(QBFTest.lncs, file)).getMessage());
 	}
 }

@@ -4,17 +4,16 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import at.jku.fmv.qbf.QBF;
 import at.jku.fmv.qbf.QBF.*;
+import at.jku.fmv.qbf.io.util.*;
 
 /**
  * See http://www.qbflib.org/qdimacs.html for details.
@@ -27,25 +26,40 @@ public class QDIMACS {
 	private QDIMACS() {}
 
 	public static QBF read(Path file) throws IOException {
-		int prefixStart = 0;
-		int prefixEnd = 0;
 
 		List<String> lines = Files.lines(file).collect(Collectors.toList());
 
-		// error reporter
-		BiConsumer<String, String> error = (msg, line) -> {
-			throw new IllegalArgumentException(
-				file.toFile()
-				+ (line == null
-					? ""
-					: ": " + (lines.indexOf(line) + 1))
-				+ ": error: " + msg);
+		if (lines.isEmpty())
+			throw new ParserException(file, "file is empty");
+
+		StringTokenizer splitSpace = new StringTokenizer(' ');
+
+		Function<String, QBF> parseLiteral = s ->
+			s.startsWith("-")
+				? new Not(new Literal(s.substring(1)))
+				: new Literal(s);
+
+		Function<String, QBF> parseClause = line -> {
+
+			List<QBF> variables = splitSpace.stream(line)
+				.filter(s -> !s.equals("0"))
+				.map(parseLiteral)
+				.collect(Collectors.toList());
+
+			if (variables.isEmpty())
+				throw new ParserException(
+					file,
+					"missing variables",
+					lines.indexOf(line) + 1);
+
+			return variables.size() > 1
+				? new Or(variables)
+				: variables.get(0);
 		};
 
-		if (lines.isEmpty())
-			error.accept(file + " is empty", null);
-
 		// scan pre{amble,fix} - for loop because we want to break early
+		int prefixStart = 0, prefixEnd = 0;
+
 		for (String line : lines) {
 			if (line.startsWith("c") || line.startsWith("p"))
 				prefixStart++;
@@ -54,36 +68,14 @@ public class QDIMACS {
 			else break;
 		}
 
-		// parse literal
-		Function<String, QBF> parseLiteral = s ->
-			s.startsWith("-")
-				? new Not(new Literal(s.substring(1)))
-				: new Literal(s);
-
-		// parse clause
-		Function<String, QBF> parseClause = line -> {
-			String[] args = line.split("\\s*0");
-
-			if (args.length == 0)
-				error.accept("missing variables", line);
-
-			List<QBF> operands =
-				Arrays.stream(args[0].split("\\s+"))
-					.map(parseLiteral)
-					.collect(Collectors.toList());
-
-			return operands.size() > 1
-				? new Or(operands)
-				: operands.get(0);
-		};
-
 		// parse matrix
 		List<QBF> clauses = lines.subList(prefixEnd + 1, lines.size()).stream()
+			.filter(s -> !s.isEmpty())
 			.map(parseClause)
 			.collect(Collectors.toList());
 
 		if (clauses.isEmpty())
-			error.accept("missing clauses", null);
+			throw new ParserException(file, "missing clauses");
 
 		QBF formula = clauses.size() > 1
 			? new And(clauses)
@@ -91,14 +83,17 @@ public class QDIMACS {
 
 		// prepend prefix
 		for (int i = prefixEnd; i >= prefixStart; i--) {
-			String[] variables = lines.get(i).split("(^[ae]\\s*|\\s*0$)");
+			Set<String> variables = splitSpace.stream(lines.get(i))
+				.skip(1)
+				.filter(s -> !s.equals("0"))
+				.collect(Collectors.toSet());
 
-			if (variables.length == 0)
-				error.accept("missing variables", lines.get(i));
+			if (variables.isEmpty())
+				throw new ParserException(file, "missing variables", i + 1);
 
 			formula = lines.get(i).startsWith("a")
-				? new ForAll(formula, variables[1].split("\\s+"))
-				: new Exists(formula, variables[1].split("\\s+"));
+				? new ForAll(formula, variables)
+				: new Exists(formula, variables);
 		}
 
 		return formula;
