@@ -3,6 +3,8 @@
 import sys
 import json
 
+from collections import OrderedDict
+
 def table (header, data, align=None):
     assert(not data or len(header) == len(data[0]))
     # markdown string
@@ -50,7 +52,7 @@ if len(sys.argv) > 1:
         results = json.load(f)
 
         benchmarks = set()
-        instances = {}
+        instances = OrderedDict()
 
         # TODO: remove check - obsolete in new version
         if "system" in results[0]["params"]:
@@ -81,6 +83,6 @@ if len(sys.argv) > 1:
                         instances[i][b] for b in benchmarks
                     ]
                 ]
-                for i in sorted(instances.keys())
+                for i in instances
             ]
         ), end="")

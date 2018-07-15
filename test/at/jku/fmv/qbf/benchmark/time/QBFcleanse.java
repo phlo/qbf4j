@@ -1,5 +1,7 @@
 package at.jku.fmv.qbf.benchmark.time;
 
+import java.nio.file.Paths;
+
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.options.Options;
 
@@ -10,15 +12,12 @@ public class QBFcleanse {
 
 		String benchmark = "cleanse";
 
-		TestSet testset =
-			new TestSet(
-				TestSet.qcirNonPrenex);
-//				TestSet.qcirNonPrenex,
-//				path -> path
-//					.toString()
-//					.matches(".*0\\d\\.qcir"));
+		TestSet testset = new TestSet(
+			Paths.get(TestSet.properties.getProperty("qcir_non-prenex")));
 
-		Options opt = Benchmarks.getOptions(benchmark, testset).build();
+		Options opt = Benchmarks.getOptions(benchmark, testset)
+			.param("parse", "true")
+			.build();
 		new Runner(opt).run();
 	}
 }

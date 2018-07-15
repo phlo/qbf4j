@@ -7,15 +7,18 @@ import org.openjdk.jmh.runner.options.Options;
 
 import at.jku.fmv.qbf.benchmark.TestSet;
 
-public class QCIRread {
+public class QDIMACSwrite {
 	public static void main(String[] args) throws Exception {
 
-		String benchmark = "readQCIR";
+		String benchmark = "writeQDIMACS";
 
 		TestSet testset = new TestSet(
-			Paths.get(TestSet.properties.getProperty("qcir_non-prenex")));
+			Paths.get(TestSet.properties.getProperty("qbf_eval17")),
+			path -> path.toString().endsWith(".qdimacs"));
 
-		Options opt = Benchmarks.getOptions(benchmark, testset).build();
+		Options opt = Benchmarks.getOptions(benchmark, testset)
+			.param("parse", "true")
+			.build();
 		new Runner(opt).run();
 	}
 }

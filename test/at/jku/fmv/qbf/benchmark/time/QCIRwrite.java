@@ -29,25 +29,22 @@ public class QCIRwrite {
 	public void writeQCIRParallel(Variables v) throws IOException {
 		QCIR.writeParallel(
 			v.formula,
-			Paths.get("/tmp/" + v.file.getFileName()),
+			Benchmarks.createTempFile("writeQCIR", ".qcir"),
 			true);
 	}
 
 	public static void main(String[] args) throws Exception {
-		String dev = ".*" + QCIRwrite.class.getSimpleName();
+//		String dev = ".*" + QCIRwrite.class.getSimpleName();
 
-		String benchmark = "write";
+		String benchmark = "writeQCIR";
 
-		TestSet testset =
-			new TestSet(
-				TestSet.qcirNonPrenex);
-//				TestSet.qcirNonPrenex,
-//				path -> path
-//					.toString()
-//					.matches(".*2[789]\\.qcir"));
+		TestSet testset = new TestSet(
+			Paths.get(TestSet.properties.getProperty("qbf_eval17")),
+			path -> path.toString().endsWith(".qcir"));
 
 		Options opt = Benchmarks.getOptions(benchmark, testset)
-			.include(dev + "." + benchmark + "*")
+//			.include(dev + "." + benchmark + "*")
+			.param("parse", "true")
 			.build();
 		new Runner(opt).run();
 	}

@@ -1,12 +1,15 @@
 package at.jku.fmv.qbf.benchmark.time;
 
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -20,6 +23,7 @@ import at.jku.fmv.qbf.QBF;
 import at.jku.fmv.qbf.QBF.Traverse;
 import at.jku.fmv.qbf.benchmark.TestSet;
 import at.jku.fmv.qbf.io.QCIR;
+import at.jku.fmv.qbf.io.QDIMACS;
 
 @BenchmarkMode(Mode.SingleShotTime)
 @Warmup(iterations = 3)
@@ -27,42 +31,75 @@ import at.jku.fmv.qbf.io.QCIR;
 @Fork(value = 1)
 public class Benchmarks {
 
+	public static Properties properties = new Properties();
+
+	static {
+		String propertiesFile = "benchmark.properties";
+		try {
+			properties.load(new FileInputStream(propertiesFile));
+		} catch (IOException e) {
+			throw new RuntimeException(
+				"unable to load '" + propertiesFile + "'",
+				e);
+		}
+	}
+
 	public static String getSystemInformation() throws IOException {
 		return
 			new BufferedReader(
 				new InputStreamReader(
 					Runtime.getRuntime()
-						.exec("uname -s -r -p")
+						.exec(properties.getProperty("sys_info_cmd"))
 						.getInputStream()))
 				.lines()
 				.collect(Collectors.joining());
+	}
+
+	public static Path createTempFile(
+		String prefix,
+		String suffix
+	) throws IOException {
+		Path tmp = Files.createTempFile(prefix, suffix);
+		tmp.toFile().deleteOnExit();
+		return tmp;
 	}
 
 	protected static String getTimeStamp() {
 		return new SimpleDateFormat("yyyyMMddHHmm").format(new Date());
 	}
 
-	@State(Scope.Thread)
+	@State(Scope.Benchmark)
 	public static class Variables {
 		@Param("")
 		public String system;
 		@Param("")
-		public String instance;
-		@Param("")
 		public String directory;
+		@Param("")
+		public String instance;
+		@Param("false")
+		public boolean parse;
+
 		public Path file;
 		public QBF formula;
 
 		@Setup(Level.Trial)
 		public void setup() throws IOException {
 			file = Paths.get(directory + "/" + instance);
+
 			instance = file.getFileName().toString();
-			formula = QCIR.read(file);
+
+			formula = parse
+				? file.toString().endsWith(".qcir")
+					? QCIR.read(file)
+					: QDIMACS.read(file)
+				: null;
 		}
 	}
 
 	@Benchmark
 	@Warmup(iterations = 0)
+	@Measurement(iterations = 1)
+	@Fork(value = 5)
 	@OutputTimeUnit(TimeUnit.SECONDS)
 	public void readQCIR(Variables v, Blackhole hole) throws IOException {
 		hole.consume(QCIR.read(v.file));
@@ -70,9 +107,29 @@ public class Benchmarks {
 
 	@Benchmark
 	@Warmup(iterations = 0)
+	@Measurement(iterations = 1)
+	@Fork(value = 5)
 	@OutputTimeUnit(TimeUnit.SECONDS)
 	public void writeQCIR(Variables v) throws IOException {
-		QCIR.write(v.formula, Paths.get("/tmp/" + v.file.getFileName()), true);
+		QCIR.write(v.formula, createTempFile("writeQCIR", ".qcir"), true);
+	}
+
+	@Benchmark
+	@Warmup(iterations = 0)
+	@Measurement(iterations = 1)
+	@Fork(value = 5)
+	@OutputTimeUnit(TimeUnit.SECONDS)
+	public void readQDIMACS(Variables v, Blackhole hole) throws IOException {
+		hole.consume(QDIMACS.read(v.file));
+	}
+
+	@Benchmark
+	@Warmup(iterations = 0)
+	@Measurement(iterations = 1)
+	@Fork(value = 5)
+	@OutputTimeUnit(TimeUnit.SECONDS)
+	public void writeQDIMACS(Variables v) throws IOException {
+		QDIMACS.write(v.formula, createTempFile("writeQDIMACS", ".qdimacs"));
 	}
 
 	@Benchmark
@@ -174,15 +231,18 @@ public class Benchmarks {
 		String cls = ".*" + Benchmarks.class.getSimpleName();
 		return new OptionsBuilder()
                 .include(cls + "." + benchmark + "*")
+				.shouldDoGC(true)
+//				.shouldFailOnError(true)
                 .param("system", getSystemInformation())
 				.param("directory", testset.directory.toString())
 				.param("instance", testset.fileNames.stream().toArray(String[]::new))
                 .resultFormat(ResultFormatType.JSON)
-                .result(
-                	"test/benchmarks/"
-                	+ benchmark
-                	+ "_"
-                	+ Benchmarks.getTimeStamp()
-                	+ ".json");
+                .result(Paths.get(properties.getProperty("result_dir"))
+					.resolve(
+						benchmark
+						+ "_"
+						+ Benchmarks.getTimeStamp()
+						+ ".json")
+					.toString());
 	}
 }

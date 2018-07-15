@@ -1,6 +1,7 @@
 package at.jku.fmv.qbf.benchmark.space;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.OptionalInt;
 import java.util.function.BiFunction;
@@ -25,13 +26,8 @@ public class MemoryConsumption {
 		}
 	}
 
-	private static TestSet testset =
-		new TestSet(
-			TestSet.qcirNonPrenex);
-//			TestSet.qcirNonPrenex,
-//			path -> path
-//				.getFileName().toString()
-//				.matches(".*0\\d\\.qcir"));
+	private static TestSet testset = new TestSet(
+		Paths.get(TestSet.properties.getProperty("qcir_non-prenex")));
 
 	private static void printResult(List<Result> results) {
 		String header[] = { "instance", "tree size [mb]", "nodes [#]" };
