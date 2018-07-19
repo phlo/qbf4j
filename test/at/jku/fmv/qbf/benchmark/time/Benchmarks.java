@@ -24,6 +24,7 @@ import at.jku.fmv.qbf.QBF.Traverse;
 import at.jku.fmv.qbf.benchmark.TestSet;
 import at.jku.fmv.qbf.io.QCIR;
 import at.jku.fmv.qbf.io.QDIMACS;
+import main.QCIR2PNF;
 
 @BenchmarkMode(Mode.SingleShotTime)
 @Warmup(iterations = 3)
@@ -158,6 +159,7 @@ public class Benchmarks {
 	@OutputTimeUnit(TimeUnit.MILLISECONDS)
 	public void streamVariablesParallel(Variables v, Blackhole hole) {
 		v.formula.streamVariables()
+			.unordered()
 			.parallel()
 			.forEach(o -> hole.consume(o));
 	}
@@ -175,6 +177,7 @@ public class Benchmarks {
 	@OutputTimeUnit(TimeUnit.MILLISECONDS)
 	public void streamBoundVariablesParallel(Variables v, Blackhole hole) {
 		v.formula.streamBoundVariables()
+			.unordered()
 			.parallel()
 			.forEach(o -> hole.consume(o));
 	}
@@ -224,13 +227,25 @@ public class Benchmarks {
 		hole.consume(v.formula.cleanse());
 	}
 
+	@Benchmark
+	@Warmup(iterations = 0)
+	@Measurement(iterations = 1)
+	@Fork(value = 5)
+	@OutputTimeUnit(TimeUnit.SECONDS)
+	public void qcir2pnf(Variables v) throws IOException {
+		QCIR2PNF.main(new String[] {
+			v.file.toString(),
+			createTempFile("qcir2pnf", ".qcir").toString()
+		});
+	}
+
 	protected static ChainedOptionsBuilder getOptions(
 		String benchmark,
 		TestSet testset
 	) throws IOException {
 		String cls = ".*" + Benchmarks.class.getSimpleName();
 		return new OptionsBuilder()
-                .include(cls + "." + benchmark + "*")
+                .include(cls + "." + benchmark)
 				.shouldDoGC(true)
 //				.shouldFailOnError(true)
                 .param("system", getSystemInformation())
