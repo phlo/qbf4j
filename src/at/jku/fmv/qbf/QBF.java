@@ -417,7 +417,7 @@ public abstract class QBF {
 					.allMatch(QBF::isLiteral)));
 	public boolean isCNF() { return isCNF.test(this); }
 
-	private enum HashID {
+	private static enum HashID {
 		FALSE,
 		TRUE,
 		LITERAL,
@@ -583,9 +583,11 @@ public abstract class QBF {
 				not.subformula.streamBoundVariables(),
 			(And and) ->
 				and.subformulas.stream()
+					.parallel()
 					.flatMap(QBF::streamBoundVariables),
 			(Or or) ->
 				or.subformulas.stream()
+					.parallel()
 					.flatMap(QBF::streamBoundVariables),
 			(ForAll forall) ->
 				Stream.concat(
@@ -598,7 +600,7 @@ public abstract class QBF {
 		);
 	}
 
-	public Stream<QBF> streamPrefix() {
+	public Stream<Quantifier> streamPrefix() {
 		return this.apply(
 			(True t) -> Stream.empty(),
 			(False f) -> Stream.empty(),
