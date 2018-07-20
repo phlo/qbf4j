@@ -17,7 +17,6 @@ class PG86Test {
 	@Test
 	@DisplayName("encode")
 	void encode() {
-
 		PG86 pg86 = new PG86();
 
 		Literal x1 = new Literal("x1");

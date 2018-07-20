@@ -7,10 +7,10 @@ import org.openjdk.jmh.runner.options.Options;
 
 import at.jku.fmv.qbf.benchmark.TestSet;
 
-public class QBFcleanse {
+public class QBFrename {
 	public static void main(String[] args) throws Exception {
 
-		String benchmark = "cleanse";
+		String benchmark = "rename";
 
 		TestSet testset = new TestSet(
 			Paths.get(TestSet.properties.getProperty("qcir_non-prenex")));

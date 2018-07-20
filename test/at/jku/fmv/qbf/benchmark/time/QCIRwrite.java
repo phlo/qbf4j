@@ -4,13 +4,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.BenchmarkMode;
-import org.openjdk.jmh.annotations.Fork;
-import org.openjdk.jmh.annotations.Measurement;
-import org.openjdk.jmh.annotations.Mode;
-import org.openjdk.jmh.annotations.OutputTimeUnit;
-import org.openjdk.jmh.annotations.Warmup;
+import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.options.Options;
 
@@ -34,16 +28,22 @@ public class QCIRwrite {
 	}
 
 	public static void main(String[] args) throws Exception {
-//		String dev = ".*" + QCIRwrite.class.getSimpleName();
 
 		String benchmark = "writeQCIR";
 
+		// TODO: eval17/c2_BMC_p1_k2048.qcir seems to be too much
 		TestSet testset = new TestSet(
+//			Paths.get(TestSet.properties.getProperty("qcir_non-prenex")),
 			Paths.get(TestSet.properties.getProperty("qbf_eval17")),
-			path -> path.toString().endsWith(".qcir"));
+			path -> path.toString().endsWith(".qcir")
+				&& !path.getFileName().toString().startsWith("c2_BMC_p1_k204"));
 
 		Options opt = Benchmarks.getOptions(benchmark, testset)
-//			.include(dev + "." + benchmark + "*")
+//			.include(
+//				QCIRwrite.class.getName()
+//				+ "."
+//				+ benchmark
+//				+ "*")
 			.param("parse", "true")
 			.build();
 		new Runner(opt).run();

@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -24,6 +25,8 @@ import at.jku.fmv.qbf.QBF.Traverse;
 import at.jku.fmv.qbf.benchmark.TestSet;
 import at.jku.fmv.qbf.io.QCIR;
 import at.jku.fmv.qbf.io.QDIMACS;
+import at.jku.fmv.qbf.pcnf.PG86;
+import at.jku.fmv.qbf.pnf.ForAllUpExistsUp;
 import main.QCIR2PNF;
 
 @BenchmarkMode(Mode.SingleShotTime)
@@ -142,14 +145,6 @@ public class Benchmarks {
 
 	@Benchmark
 	@OutputTimeUnit(TimeUnit.MILLISECONDS)
-	public void streamFormulaParallel(Variables v, Blackhole hole) {
-		v.formula.stream(Traverse.PostOrder)
-			.parallel()
-			.forEach(o -> hole.consume(o));
-	}
-
-	@Benchmark
-	@OutputTimeUnit(TimeUnit.MILLISECONDS)
 	public void streamVariables(Variables v, Blackhole hole) {
 		v.formula.streamVariables()
 			.forEach(o -> hole.consume(o));
@@ -157,28 +152,8 @@ public class Benchmarks {
 
 	@Benchmark
 	@OutputTimeUnit(TimeUnit.MILLISECONDS)
-	public void streamVariablesParallel(Variables v, Blackhole hole) {
-		v.formula.streamVariables()
-			.unordered()
-			.parallel()
-			.forEach(o -> hole.consume(o));
-	}
-
-	@Benchmark
-	@BenchmarkMode(Mode.SingleShotTime)
-	@OutputTimeUnit(TimeUnit.MILLISECONDS)
 	public void streamBoundVariables(Variables v, Blackhole hole) {
 		v.formula.streamBoundVariables()
-			.forEach(o -> hole.consume(o));
-	}
-
-	@Benchmark
-	@BenchmarkMode(Mode.SingleShotTime)
-	@OutputTimeUnit(TimeUnit.MILLISECONDS)
-	public void streamBoundVariablesParallel(Variables v, Blackhole hole) {
-		v.formula.streamBoundVariables()
-			.unordered()
-			.parallel()
 			.forEach(o -> hole.consume(o));
 	}
 
@@ -191,14 +166,6 @@ public class Benchmarks {
 
 	@Benchmark
 	@OutputTimeUnit(TimeUnit.MILLISECONDS)
-	public void streamFreeVariablesParallel(Variables v, Blackhole hole) {
-		v.formula.streamBoundVariables()
-			.parallel()
-			.forEach(o -> hole.consume(o));
-	}
-
-	@Benchmark
-	@OutputTimeUnit(TimeUnit.MILLISECONDS)
 	public void streamQPaths(Variables v, Blackhole hole) {
 		v.formula.streamQPaths()
 			.forEach(o -> hole.consume(o));
@@ -206,25 +173,56 @@ public class Benchmarks {
 
 	@Benchmark
 	@OutputTimeUnit(TimeUnit.MILLISECONDS)
-	public void streamQPathsParallel(Variables v, Blackhole hole) {
-		v.formula.streamQPaths()
-			.parallel()
-			.forEach(o -> hole.consume(o));
+	public void getCriticalPaths(Variables v, Blackhole hole) {
+		hole.consume(QBF.getCriticalPaths(v.formula.getQPaths()));
 	}
 
 	@Benchmark
 	@OutputTimeUnit(TimeUnit.MILLISECONDS)
-	public void streamQPathsParallelUnordered(Variables v, Blackhole hole) {
-		v.formula.streamQPaths()
-			.unordered()
-			.parallel()
-			.forEach(o -> hole.consume(o));
+	public void getSkeleton(Variables v, Blackhole hole) {
+		hole.consume(v.formula.getSkeleton());
+	}
+
+	@Benchmark
+	@OutputTimeUnit(TimeUnit.MILLISECONDS)
+	public void unifyPrefix(Variables v, Blackhole hole) {
+		hole.consume(v.formula.unifyPrefix());
+	}
+
+	@Benchmark
+	@OutputTimeUnit(TimeUnit.MILLISECONDS)
+	public void rename(Variables v, Blackhole hole) {
+		hole.consume(v.formula.rename(new HashMap<>()));
 	}
 
 	@Benchmark
 	@OutputTimeUnit(TimeUnit.MILLISECONDS)
 	public void cleanse(Variables v, Blackhole hole) {
 		hole.consume(v.formula.cleanse());
+	}
+
+	@Benchmark
+	@OutputTimeUnit(TimeUnit.MILLISECONDS)
+	public void toNNF(Variables v, Blackhole hole) {
+		hole.consume(v.formula.toNNF());
+	}
+
+	@Benchmark
+	@OutputTimeUnit(TimeUnit.MILLISECONDS)
+	public void toPNF(Variables v, Blackhole hole) {
+		hole.consume(v.formula.toPNF(new ForAllUpExistsUp()));
+	}
+
+	@Benchmark
+	@OutputTimeUnit(TimeUnit.MILLISECONDS)
+	public void toPCNF(Variables v, Blackhole hole) {
+		hole.consume(v.formula.toPCNF(new ForAllUpExistsUp(), new PG86()));
+	}
+
+	@Benchmark
+	@OutputTimeUnit(TimeUnit.MILLISECONDS)
+	public void toString(Variables v, Blackhole hole) {
+		hole.consume(v.formula.toString());
 	}
 
 	@Benchmark

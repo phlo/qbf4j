@@ -16,18 +16,11 @@ import at.jku.fmv.qbf.benchmark.time.Benchmarks.Variables;
 @Warmup(iterations = 3)
 @Measurement(iterations = 5)
 @Fork(value = 1)
-public class QBFstreamQPaths {
+public class QBFstreamVariables {
 
 	@Benchmark
-	public void streamQPathsParallel(Variables v, Blackhole hole) {
-		v.formula.streamQPaths()
-			.parallel()
-			.forEach(o -> hole.consume(o));
-	}
-
-	@Benchmark
-	public void streamQPathsParallelUnordered(Variables v, Blackhole hole) {
-		v.formula.streamQPaths()
+	public void streamVariablesParallel(Variables v, Blackhole hole) {
+		v.formula.streamVariables()
 			.unordered()
 			.parallel()
 			.forEach(o -> hole.consume(o));
@@ -35,7 +28,7 @@ public class QBFstreamQPaths {
 
 	public static void main(String[] args) throws Exception {
 
-		String benchmark = "streamQPaths";
+		String benchmark = "streamVariables";
 
 		TestSet testset = new TestSet(
 			Paths.get(TestSet.properties.getProperty("qcir_non-prenex")));
@@ -43,7 +36,7 @@ public class QBFstreamQPaths {
 
 		Options opt = Benchmarks.getOptions(benchmark, testset)
 			.include(
-				QBFstreamQPaths.class.getName()
+				QBFstreamVariables.class.getName()
 				+ "."
 				+ benchmark
 				+ "*")

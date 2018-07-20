@@ -12,7 +12,6 @@ public class QCIR2PNF {
 
 		String benchmark = "qcir2pnf";
 
-		// TODO: eval17/c2_BMC_p1_k2048.qcir seems to be too much
 		TestSet testset = new TestSet(
 			Paths.get(TestSet.properties.getProperty("qcir_non-prenex")));
 //			Paths.get(TestSet.properties.getProperty("qbf_eval17")));

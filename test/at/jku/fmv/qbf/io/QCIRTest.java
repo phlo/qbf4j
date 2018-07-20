@@ -23,7 +23,8 @@ public class QCIRTest {
 
 	static Path file;
 
-	static List<String> lncs = Arrays.asList(new String[] {
+	// ∃p (∀q ∃r ∀s ∃t ϕ0 ∧ ∀q' ∃r' ϕ1 ∧ ¬∀q'' ∃r'' ϕ2)
+	public static List<String> lncs = Arrays.asList(new String[] {
 		"#QCIR-G14"
 		, "exists(p)"
 		, "output(ϕ)"
@@ -38,7 +39,7 @@ public class QCIRTest {
 		, "ϕ = and(ϕ0_1, ϕ1_1, -ϕ2_1)"
 	});
 
-	static List<String> lncsOut = Arrays.asList(new String[] {
+	public static List<String> lncsOut = Arrays.asList(new String[] {
 		"#QCIR-G14"
 		, "exists(p)"
 		, "output(13)"
@@ -53,13 +54,13 @@ public class QCIRTest {
 		, "13 = and(17, 19, -21)"
 	});
 
-	static List<String> lncsCleansed = Arrays.asList(new String[] {
+	public static List<String> lncsCleansed = Arrays.asList(new String[] {
 		"#QCIR-G14 4"
 		, "output(4)"
 		, "4 = and(1, 2, -3)"
 	});
 
-	static List<String> g14 = Arrays.asList(new String[] {
+	public static List<String> g14 = Arrays.asList(new String[] {
 		"#QCIR-G14"
 		, "forall(z)"
 		, "output(4)"
@@ -68,7 +69,7 @@ public class QCIRTest {
 		, "4 = or(z, 6)"
 	});
 
-	static List<String> g14Cleansed = Arrays.asList(new String[] {
+	public static List<String> g14Cleansed = Arrays.asList(new String[] {
 		"#QCIR-G14 6"
 		, "forall(1)"
 		, "output(4)"
@@ -77,7 +78,7 @@ public class QCIRTest {
 		, "4 = or(1, 6)"
 	});
 
-	static List<String> propositional = Arrays.asList(new String[] {
+	public static List<String> propositional = Arrays.asList(new String[] {
 		"#QCIR-G14 7"
 		, "output(5)"
 		, "6 = or(2, -3)"

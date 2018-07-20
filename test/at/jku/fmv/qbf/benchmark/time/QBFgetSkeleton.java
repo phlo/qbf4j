@@ -7,14 +7,13 @@ import org.openjdk.jmh.runner.options.Options;
 
 import at.jku.fmv.qbf.benchmark.TestSet;
 
-public class QBFcleanse {
+public class QBFgetSkeleton {
 	public static void main(String[] args) throws Exception {
 
-		String benchmark = "cleanse";
+		String benchmark = "getSkeleton";
 
 		TestSet testset = new TestSet(
 			Paths.get(TestSet.properties.getProperty("qcir_non-prenex")));
-//			Paths.get(TestSet.properties.getProperty("qbf_eval17")));
 
 		Options opt = Benchmarks.getOptions(benchmark, testset)
 			.param("parse", "true")
