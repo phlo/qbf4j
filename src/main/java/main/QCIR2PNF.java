@@ -1,8 +1,10 @@
 package main;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -14,6 +16,8 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import at.jku.fmv.qbf.QBF;
 import at.jku.fmv.qbf.io.*;
@@ -41,34 +45,62 @@ public class QCIR2PNF {
 		return Class.forName(name).asSubclass(type).newInstance();
 	}
 
+	private static List<String> listClassesPath(URI uri, String pkg) {
+		Path pkgPath = Paths.get(uri);
+		Path classPath =
+			Arrays.stream(pkg.split("\\."))
+				.reduce(
+					pkgPath,
+					(p1, p2) -> p1.getParent(),
+					(p1, p2) -> p1.getParent());
+
+		try {
+			return Files.walk(pkgPath)
+				.filter(path -> path.toString().endsWith(".class"))
+				.map(clazzPath -> classPath.relativize(clazzPath))
+				.map(clazzPath -> clazzPath.toString()
+					.replace("/", ".")
+					.replace(".class", ""))
+				.collect(Collectors.toList());
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private static List<String> listClassesJAR(URI uri, String pkg) {
+        try (ZipFile zip = new ZipFile(new File(uri))) {
+			String pkgPath = pkg.replace(".", "/");
+			return zip.stream()
+				.filter(ze -> !ze.isDirectory())
+				.map(ZipEntry::getName)
+				.filter(f -> f.startsWith(pkgPath))
+				.filter(f -> f.endsWith(".class"))
+				.map(f -> f.replace("/", "."))
+				.map(f -> f.replace(".class", ""))
+				.collect(Collectors.toList());
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	private static <T> List<Class<? extends T>> getImplementations(
 		final Class<? extends T> type
 	) {
 		try {
+			String pkg = type.getPackage().getName();
+
 			Enumeration<URL> urls = Thread.currentThread()
 				.getContextClassLoader()
-				.getResources(type.getPackage().getName()
-					.replace(PrenexingStrategy.class.getSimpleName(), "")
-					.replace('.', '/'));
+				.getResources(pkg.replace('.', '/'));
 
-			List<Class<? extends T>> classes = new ArrayList<>();
+			List<Class<? extends T>> implementations = new ArrayList<>();
 
 			while (urls.hasMoreElements()) {
-				Path pkgPath = Paths.get(urls.nextElement().toURI());
-
-				Path classPath =
-					Arrays.stream(type.getPackage().getName().split("\\."))
-						.reduce(
-							pkgPath,
-							(p1, p2) -> p1.getParent(),
-							(p1, p2) -> p1.getParent());
-
-				Files.walk(pkgPath)
-					.filter(path -> path.toString().endsWith(".class"))
-					.map(clazzPath -> classPath.relativize(clazzPath))
-					.map(clazzPath -> clazzPath.toString()
-						.replace("/", ".")
-						.replaceAll(".class$", ""))
+				URL url = urls.nextElement();
+				(url.getProtocol().equals("jar")
+					? listClassesJAR(new URI(url.getFile().split("!")[0]), pkg)
+					: listClassesPath(url.toURI(), pkg))
+					.stream()
 					.map(clazzName -> {
 						Class<? extends T> clazz;
 						try {
@@ -84,10 +116,12 @@ public class QCIR2PNF {
 						!clazz.isInterface()
 						&& !clazz.isLocalClass()
 						&& !Modifier.isAbstract(clazz.getModifiers()))
-					.forEach(classes::add);
+					.forEach(implementations::add);
 			}
 
-			return classes;
+			implementations.sort(
+				(c1, c2) -> c1.getName().compareTo(c2.getName()));
+			return implementations;
 
 		} catch (URISyntaxException | IOException e) {
 			throw new RuntimeException(e);

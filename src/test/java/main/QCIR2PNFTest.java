@@ -3,6 +3,8 @@ package main;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -13,12 +15,14 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import at.jku.fmv.qbf.io.QCIRTest;
 import at.jku.fmv.qbf.io.QDIMACSTest;
+import main.QCIR2PNF;
 
 @DisplayName("qcir2pnf")
 class QCIR2PNFTest {
@@ -27,6 +31,9 @@ class QCIR2PNFTest {
 	static Path output;
 
 	static int exitCode;
+
+	static PrintStream stdout = System.out;
+	static PrintStream stderr = System.err;
 
 	// ∃p,q'': ∀q,q',r'': ∃r,r': ∀s: ∃t: (ϕ0 ∧ ϕ1 ∧ -ϕ2)
 	public static List<String> lncsAUEU = Arrays.asList(new String[] {
@@ -171,8 +178,19 @@ class QCIR2PNFTest {
 		});
 
 		// prevent output to stdin and stderr
-		System.out.close();
-		System.err.close();
+		PrintStream devNull = new PrintStream(new OutputStream() {
+			@Override
+			public void write(int b) throws IOException {}
+		});
+
+		System.setOut(devNull);
+		System.setErr(devNull);
+	}
+
+	@AfterAll
+	static void cleanup() {
+		System.setOut(stdout);
+		System.setErr(stderr);
 	}
 
 	@Test
