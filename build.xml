@@ -1,0 +1,174 @@
+<project name="qbf4j" default="test" basedir=".">
+
+  <property name="version" value="0.1-alpha"/>
+
+  <property name="src" location="src"/>
+  <property name="src.main.java" location="${src}/main/java"/>
+  <property name="src.test.java" location="${src}/test/java"/>
+  <property name="src.benchmark.java" location="${src}/benchmark/java"/>
+
+  <property name="bin" location="bin"/>
+  <property name="bin.main" location="${bin}/main"/>
+  <property name="bin.test" location="${bin}/test"/>
+  <property name="bin.benchmark" location="${bin}/benchmark"/>
+
+  <property name="dist" location="dist"/>
+
+  <property name="doc" location="doc"/>
+
+  <property name="lib" location="lib"/>
+
+  <target name="init">
+    <tstamp/>
+    <mkdir dir="${bin.main}"/>
+    <mkdir dir="${bin.test}"/>
+    <mkdir dir="${bin.benchmark}"/>
+  </target>
+
+  <!-- compilation -->
+
+  <target name="compile" depends="init">
+    <javac srcdir="${src.main.java}"
+      destdir="${bin.main}"
+      includeantruntime="false"/>
+  </target>
+
+  <target name="compile-test" depends="compile">
+    <javac srcdir="${src.test.java}"
+      destdir="${bin.test}"
+      includeantruntime="false">
+      <classpath location="${bin.main}"/>
+      <classpath location="${junit.jar}"/>
+    </javac>
+  </target>
+
+  <target name="compile-benchmark" depends="compile">
+    <javac srcdir="${src.benchmark.java}"
+      destdir="${bin.benchmark}"
+      includeantruntime="false">
+      <classpath location="${bin.main}"/>
+      <classpath refid="jmh.build.path"/>
+    </javac>
+  </target>
+
+  <!-- distribution -->
+
+  <target name="dist" depends="compile,doc">
+    <mkdir dir="${dist}"/>
+
+    <jar jarfile="${dist}/qcir2pnf.jar"
+      basedir="${bin.main}">
+      <manifest>
+        <attribute name="Main-Class" value="main.QCIR2PNF"/>
+      </manifest>
+    </jar>
+
+    <jar jarfile="${dist}/${ant.project.name}-${version}.jar"
+      basedir="${bin.main}"
+      excludes="main/*"/>
+
+    <jar jarfile="${dist}/${ant.project.name}-${version}-sources.jar"
+      basedir="${src.main.java}"/>
+
+    <jar jarfile="${dist}/${ant.project.name}-${version}-javadoc.jar"
+      basedir="${doc}"/>
+  </target>
+
+  <!-- javadoc -->
+
+  <target name="doc">
+    <mkdir dir="${doc}"/>
+    <javadoc sourcepath="${src.main.java}" destdir="${doc}" />
+  </target>
+
+  <!-- unit tests -->
+
+  <property name="junit.ver" value="1.2.0"/>
+  <property name="junit.jar" location="${lib}/junit-platform-console-standalone-${junit.ver}.jar"/>
+
+  <target name="download-junit">
+    <mkdir dir="${lib}"/>
+    <get src="https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/${junit.ver}/junit-platform-console-standalone-${junit.ver}.jar"
+      dest="${junit.jar}"
+      verbose="true" usetimestamp="true" skipexisting="true"/>
+  </target>
+
+  <target name="test" depends="compile,compile-test,download-junit">
+    <java jar="${junit.jar}" fork="true">
+      <arg line="-cp"/>
+      <arg path="${bin.main}:${bin.test}"/>
+      <arg line="--scan-classpath"/>
+    </java>
+  </target>
+
+  <!-- benchmarks (JMH) -->
+
+  <property name="jmh.ver" value="1.19"/>
+
+  <property name="jmh-core.jar" location="${lib}/jmh-core.jar"/>
+  <property name="jmh-core-benchmarks.jar" location="${lib}/jmh-core-benchmarks.jar"/>
+  <property name="jmh-generator-annprocess.jar" location="${lib}/jmh-generator-annprocess.jar"/>
+  <property name="joptsimple.jar" location="${lib}/joptsimple.jar"/>
+  <property name="commonsmath.jar" location="${lib}/commonsmath.jar"/>
+
+  <path id="jmh.build.path">
+    <pathelement location="${jmh-core.jar}"/>
+    <pathelement location="${jmh-generator-annprocess.jar}"/>
+  </path>
+
+  <path id="jmh.runtime.path">
+    <pathelement location="${jmh-core.jar}"/>
+    <pathelement location="${joptsimple.jar}"/>
+    <pathelement location="${commonsmath.jar}"/>
+  </path>
+
+  <target name="download-jmh">
+    <mkdir dir="${lib}"/>
+    <get src="http://central.maven.org/maven2/org/openjdk/jmh/jmh-core/${jmh.ver}/jmh-core-${jmh.ver}.jar"
+      dest="${jmh-core.jar}"
+      verbose="true" usetimestamp="true" skipexisting="true"/>
+    <get src="http://central.maven.org/maven2/org/openjdk/jmh/jmh-core-benchmarks/${jmh.ver}/jmh-core-benchmarks-${jmh.ver}.jar"
+      dest="${jmh-core-benchmarks.jar}"
+      verbose="true" usetimestamp="true" skipexisting="true"/>
+    <get src="http://central.maven.org/maven2/org/openjdk/jmh/jmh-generator-annprocess/${jmh.ver}/jmh-generator-annprocess-${jmh.ver}.jar"
+      dest="${jmh-generator-annprocess.jar}"
+      verbose="true" usetimestamp="true" skipexisting="true"/>
+    <get src="http://central.maven.org/maven2/net/sf/jopt-simple/jopt-simple/4.6/jopt-simple-4.6.jar"
+      dest="${joptsimple.jar}"
+      verbose="true" usetimestamp="true" skipexisting="true"/>
+    <get src="http://central.maven.org/maven2/org/apache/commons/commons-math3/3.2/commons-math3-3.2.jar"
+      dest="${commonsmath.jar}"
+      verbose="true" usetimestamp="true" skipexisting="true"/>
+  </target>
+
+  <target name="benchmark" depends="download-jmh,compile-benchmark">
+    <mkdir dir="${dist}"/>
+
+    <jar jarfile="${dist}/${ant.project.name}-${version}-benchmark.jar"
+      basedir="${bin.benchmark}">
+      <manifest>
+        <attribute name="Main-Class" value="org.openjdk.jmh.Main"/>
+      </manifest>
+      <fileset dir="${bin.main}"/>
+      <zipfileset src="${jmh-core.jar}" excludes="**/META-INF/services/**"/>
+      <zipfileset src="${joptsimple.jar}"/>
+      <zipfileset src="${commonsmath.jar}"/>
+    </jar>
+  </target>
+
+  <target name="instrumentation" depends="init,compile-benchmark">
+    <jar destfile="${lib}/QBFSizeAgent.jar">
+      <fileset dir="${bin.benchmark}" includes="**/QBFSizeAgent.class"/>
+      <manifest>
+        <attribute name="Premain-Class" value="at.jku.fmv.qbf.instrumentation.QBFSizeAgent"/>
+        <attribute name="Agent-Class" value="at.jku.fmv.qbf.instrumentation.QBFSizeAgent"/>
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="clean">
+    <delete dir="${bin}"/>
+    <delete dir="${dist}"/>
+    <delete dir="${doc}"/>
+  </target>
+</project>
