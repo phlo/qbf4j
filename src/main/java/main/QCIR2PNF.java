@@ -22,9 +22,17 @@ import java.util.zip.ZipFile;
 import at.jku.fmv.qbf.QBF;
 import at.jku.fmv.qbf.io.*;
 import at.jku.fmv.qbf.pcnf.CNFEncoder;
+import at.jku.fmv.qbf.pcnf.PG86;
+import at.jku.fmv.qbf.pnf.ForAllUpExistsUp;
 import at.jku.fmv.qbf.pnf.PrenexingStrategy;
 
 public class QCIR2PNF {
+
+	private static final Class<? extends PrenexingStrategy> defaultStrategy =
+		ForAllUpExistsUp.class;
+
+	private static final Class<? extends CNFEncoder> defaultEncoder =
+		PG86.class;
 
 	private static void error(int status, String msg) {
 		System.err.println("error: " + msg);
@@ -145,9 +153,11 @@ public class QCIR2PNF {
 		+ strategies.stream()
 			.map(clazz ->
 				"                                  "
-				+ clazz.getName())
-			.collect(Collectors.joining("\n"))
-			+ " (default)\n"
+				+ clazz.getName()
+				+ (clazz == defaultStrategy
+					? " (default)"
+					: ""))
+			.collect(Collectors.joining("\n")) + "\n"
 		+ "\n"
 		+ "  -c [<class>], --cnf[=<class>]   transform to PCNF, where <class> is the fully\n"
 		+ "                                  qualified name of a class implementing the\n"
@@ -156,9 +166,11 @@ public class QCIR2PNF {
 		+ encodings.stream()
 			.map(clazz ->
 				"                                  "
-				+ clazz.getName())
-			.collect(Collectors.joining("\n"))
-			+ " (default)\n"
+				+ clazz.getName()
+				+ (clazz == defaultEncoder
+					? " (default)"
+					: ""))
+			.collect(Collectors.joining("\n")) + "\n"
 		+ "\n"
 		+ "  --cleanse                       cleanse formula\n"
 		+ "\n"
@@ -208,10 +220,10 @@ public class QCIR2PNF {
 			}
 
 			if (strategy == null)
-				strategy = strategies.get(strategies.size() - 1).newInstance();
+				strategy = defaultStrategy.newInstance();
 
 			if (encoder == null)
-				encoder = encodings.get(encodings.size() - 1).newInstance();
+				encoder = defaultEncoder.newInstance();
 
 			Path inFile = Paths.get(args[args.length - 2]);
 			Path outFile = Paths.get(args[args.length - 1]);
