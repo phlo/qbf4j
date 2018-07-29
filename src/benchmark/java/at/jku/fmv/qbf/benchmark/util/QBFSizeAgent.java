@@ -1,4 +1,4 @@
-package at.jku.fmv.qbf.instrumentation;
+package at.jku.fmv.qbf.benchmark.util;
 
 import java.lang.instrument.Instrumentation;
 import java.util.IdentityHashMap;

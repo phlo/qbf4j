@@ -6,6 +6,7 @@
   <property name="src.main.java" location="${src}/main/java"/>
   <property name="src.test.java" location="${src}/test/java"/>
   <property name="src.benchmark.java" location="${src}/benchmark/java"/>
+  <property name="src.benchmark.resources" location="${src}/benchmark/resources"/>
 
   <property name="bin" location="bin"/>
   <property name="bin.main" location="${bin}/main"/>
@@ -49,6 +50,9 @@
       <classpath location="${bin.main}"/>
       <classpath refid="jmh.build.path"/>
     </javac>
+    <copy todir="${bin.benchmark}">
+      <fileset dir="${src.benchmark.resources}"/>
+    </copy>
   </target>
 
   <!-- distribution -->
@@ -141,7 +145,7 @@
       verbose="true" usetimestamp="true" skipexisting="true"/>
   </target>
 
-  <target name="benchmark" depends="download-jmh,compile-benchmark">
+  <target name="benchmark" depends="download-jmh,compile-benchmark,instrumentation">
     <mkdir dir="${dist}"/>
 
     <jar jarfile="${dist}/${ant.project.name}-${version}-benchmark.jar"
@@ -160,8 +164,8 @@
     <jar destfile="${lib}/QBFSizeAgent.jar">
       <fileset dir="${bin.benchmark}" includes="**/QBFSizeAgent.class"/>
       <manifest>
-        <attribute name="Premain-Class" value="at.jku.fmv.qbf.instrumentation.QBFSizeAgent"/>
-        <attribute name="Agent-Class" value="at.jku.fmv.qbf.instrumentation.QBFSizeAgent"/>
+        <attribute name="Premain-Class" value="at.jku.fmv.qbf.benchmark.util.QBFSizeAgent"/>
+        <attribute name="Agent-Class" value="at.jku.fmv.qbf.benchmark.util.QBFSizeAgent"/>
       </manifest>
     </jar>
   </target>

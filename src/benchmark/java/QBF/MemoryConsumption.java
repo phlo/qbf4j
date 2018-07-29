@@ -1,4 +1,4 @@
-package at.jku.fmv.qbf.benchmark.space;
+package QBF;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -10,8 +10,9 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import at.jku.fmv.qbf.benchmark.TestSet;
-import at.jku.fmv.qbf.instrumentation.QBFSizeAgent;
+import at.jku.fmv.qbf.benchmark.Benchmarks;
+import at.jku.fmv.qbf.benchmark.util.QBFSizeAgent;
+import at.jku.fmv.qbf.benchmark.util.TestSet;
 import at.jku.fmv.qbf.io.QCIR;
 
 public class MemoryConsumption {
@@ -26,8 +27,7 @@ public class MemoryConsumption {
 		}
 	}
 
-	private static TestSet testset = new TestSet(
-		Paths.get(TestSet.properties.getProperty("qcir_non-prenex")));
+	private static TestSet testset = Benchmarks.getTestSet();
 
 	private static void printResult(List<Result> results) {
 		String header[] = { "instance", "tree size [mb]", "nodes [#]" };

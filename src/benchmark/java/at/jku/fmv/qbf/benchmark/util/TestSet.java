@@ -1,29 +1,14 @@
-package at.jku.fmv.qbf.benchmark;
+package at.jku.fmv.qbf.benchmark.util;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Properties;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class TestSet {
-
-	public static Properties properties = new Properties();
-
-	static {
-		String propertiesFile = "testset.properties";
-		try {
-			properties.load(new FileInputStream(propertiesFile));
-		} catch (IOException e) {
-			throw new RuntimeException(
-				"unable to load '" + propertiesFile + "'",
-				e);
-		}
-	}
 
 	public static final Comparator<Path> bySizeAscending =
 		new Comparator<Path>() {
@@ -45,6 +30,22 @@ public class TestSet {
 			this.directory = directory;
 			this.files = Files.list(directory)
 				.filter(selector)
+				.sorted(bySizeAscending)
+				.collect(Collectors.toList());
+			this.fileNames = files.stream()
+				.map(Path::getFileName)
+				.map(Path::toString)
+				.collect(Collectors.toList());
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public TestSet(Path directory, String regex) {
+		try {
+			this.directory = directory;
+			this.files = Files.list(directory)
+				.filter(f -> f.getFileName().toString().matches(regex))
 				.sorted(bySizeAscending)
 				.collect(Collectors.toList());
 			this.fileNames = files.stream()
