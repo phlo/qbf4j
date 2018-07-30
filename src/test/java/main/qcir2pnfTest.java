@@ -22,10 +22,10 @@ import org.junit.jupiter.api.Test;
 
 import at.jku.fmv.qbf.io.QCIRTest;
 import at.jku.fmv.qbf.io.QDIMACSTest;
-import main.QCIR2PNF;
+import main.qcir2pnf;
 
 @DisplayName("qcir2pnf")
-class QCIR2PNFTest {
+class qcir2pnfTest {
 
 	static Path inputLNCS, inputG14;
 	static Path output;
@@ -196,13 +196,13 @@ class QCIR2PNFTest {
 	@Test
 	@DisplayName("default")
 	void test_default() throws IOException {
-		QCIR2PNF.main(new String[] {
+		qcir2pnf.main(new String[] {
 			inputLNCS.toString(),
 			output.toString()
 		});
 		assertEquals(lncsAUEU, Files.readAllLines(output));
 
-		QCIR2PNF.main(new String[] {
+		qcir2pnf.main(new String[] {
 			inputG14.toString(),
 			output.toString()
 		});
@@ -212,7 +212,7 @@ class QCIR2PNFTest {
 	@Test
 	@DisplayName("prenexing strategy")
 	void test_strategy() throws IOException {
-		QCIR2PNF.main(new String[] {
+		qcir2pnf.main(new String[] {
 			"-s",
 			"at.jku.fmv.qbf.pnf.ForAllDownExistsDown",
 			inputLNCS.toString(),
@@ -220,7 +220,7 @@ class QCIR2PNFTest {
 		});
 		assertEquals(lncsADED, Files.readAllLines(output));
 
-		QCIR2PNF.main(new String[] {
+		qcir2pnf.main(new String[] {
 			"-s",
 			"at.jku.fmv.qbf.pnf.ForAllDownExistsDown",
 			inputG14.toString(),
@@ -228,14 +228,14 @@ class QCIR2PNFTest {
 		});
 		assertEquals(g14PNF, Files.readAllLines(output));
 
-		QCIR2PNF.main(new String[] {
+		qcir2pnf.main(new String[] {
 			"--strategy=at.jku.fmv.qbf.pnf.ForAllDownExistsDown",
 			inputLNCS.toString(),
 			output.toString()
 		});
 		assertEquals(lncsADED, Files.readAllLines(output));
 
-		QCIR2PNF.main(new String[] {
+		qcir2pnf.main(new String[] {
 			"--strategy=at.jku.fmv.qbf.pnf.ForAllDownExistsDown",
 			inputG14.toString(),
 			output.toString()
@@ -246,14 +246,14 @@ class QCIR2PNFTest {
 	@Test
 	@DisplayName("cleanse")
 	void test_cleanse() throws IOException {
-		QCIR2PNF.main(new String[] {
+		qcir2pnf.main(new String[] {
 			"--cleanse",
 			inputLNCS.toString(),
 			output.toString()
 		});
 		assertEquals(QCIRTest.lncsCleansed, Files.readAllLines(output));
 
-		QCIR2PNF.main(new String[] {
+		qcir2pnf.main(new String[] {
 			"--cleanse",
 			inputG14.toString(),
 			output.toString()
@@ -264,35 +264,35 @@ class QCIR2PNFTest {
 	@Test
 	@DisplayName("cnf")
 	void test_cnf() throws IOException {
-		QCIR2PNF.main(new String[] {
+		qcir2pnf.main(new String[] {
 			"-c",
 			inputLNCS.toString(),
 			output.toString()
 		});
 		assertEquals(lncsAUEU, Files.readAllLines(output));
 
-		QCIR2PNF.main(new String[] {
+		qcir2pnf.main(new String[] {
 			"-c",
 			inputG14.toString(),
 			output.toString()
 		});
 		assertEquals(g14PCNF, Files.readAllLines(output));
 
-		QCIR2PNF.main(new String[] {
+		qcir2pnf.main(new String[] {
 			"--cnf",
 			inputLNCS.toString(),
 			output.toString()
 		});
 		assertEquals(lncsAUEU, Files.readAllLines(output));
 
-		QCIR2PNF.main(new String[] {
+		qcir2pnf.main(new String[] {
 			"--cnf",
 			inputG14.toString(),
 			output.toString()
 		});
 		assertEquals(g14PCNF, Files.readAllLines(output));
 
-		QCIR2PNF.main(new String[] {
+		qcir2pnf.main(new String[] {
 			"-c",
 			"at.jku.fmv.qbf.pcnf.PG86",
 			inputLNCS.toString(),
@@ -300,7 +300,7 @@ class QCIR2PNFTest {
 		});
 		assertEquals(lncsAUEU, Files.readAllLines(output));
 
-		QCIR2PNF.main(new String[] {
+		qcir2pnf.main(new String[] {
 			"-c",
 			"at.jku.fmv.qbf.pcnf.PG86",
 			inputG14.toString(),
@@ -308,14 +308,14 @@ class QCIR2PNFTest {
 		});
 		assertEquals(g14PCNF, Files.readAllLines(output));
 
-		QCIR2PNF.main(new String[] {
+		qcir2pnf.main(new String[] {
 			"--cnf=at.jku.fmv.qbf.pcnf.PG86",
 			inputLNCS.toString(),
 			output.toString()
 		});
 		assertEquals(lncsAUEU, Files.readAllLines(output));
 
-		QCIR2PNF.main(new String[] {
+		qcir2pnf.main(new String[] {
 			"--cnf=at.jku.fmv.qbf.pcnf.PG86",
 			inputG14.toString(),
 			output.toString()
@@ -326,14 +326,14 @@ class QCIR2PNFTest {
 	@Test
 	@DisplayName("qdimacs")
 	void test_qdimacs() throws IOException {
-		QCIR2PNF.main(new String[] {
+		qcir2pnf.main(new String[] {
 			"--qdimacs",
 			inputLNCS.toString(),
 			output.toString()
 		});
 		assertEquals(lncsQDIMACS, Files.readAllLines(output));
 
-		QCIR2PNF.main(new String[] {
+		qcir2pnf.main(new String[] {
 			"--qdimacs",
 			inputG14.toString(),
 			output.toString()
@@ -372,15 +372,15 @@ class QCIR2PNFTest {
 						Arrays.stream(cnfOpts[j]))
 					.collect(Collectors.toList());
 
-				QCIR2PNF.main(buildArgs.apply(args));
+				qcir2pnf.main(buildArgs.apply(args));
 				assertEquals(g14PCNF, Files.readAllLines(output));
 
 				args.add("--cleanse");
-				QCIR2PNF.main(buildArgs.apply(args));
+				qcir2pnf.main(buildArgs.apply(args));
 				assertEquals(g14PCNFCleansed, Files.readAllLines(output));
 
 				args.add("--qdimacs");
-				QCIR2PNF.main(buildArgs.apply(args));
+				qcir2pnf.main(buildArgs.apply(args));
 				assertEquals(
 					QDIMACSTest.g14QDIMACS,
 					Files.readAllLines(output));
@@ -394,31 +394,31 @@ class QCIR2PNFTest {
 		// no arguments
 		assertThrows(
 			SecurityException.class,
-			() -> QCIR2PNF.main(new String[] {}));
+			() -> qcir2pnf.main(new String[] {}));
 		assertEquals(1, exitCode);
 
 		// single argument
 		assertThrows(
 			SecurityException.class,
-			() -> QCIR2PNF.main(new String[] { inputLNCS.toString() }));
+			() -> qcir2pnf.main(new String[] { inputLNCS.toString() }));
 		assertEquals(1, exitCode);
 
 		// non-existing input file
 		assertThrows(
 			SecurityException.class,
-			() -> QCIR2PNF.main(new String[] { "nonexisting.qcir" }));
+			() -> qcir2pnf.main(new String[] { "nonexisting.qcir" }));
 		assertEquals(1, exitCode);
 
 		// non-existing output file location
 		assertThrows(
 			SecurityException.class,
-			() -> QCIR2PNF.main(new String[] { "nonexisting/output.qcir" }));
+			() -> qcir2pnf.main(new String[] { "nonexisting/output.qcir" }));
 		assertEquals(1, exitCode);
 
 		// illegal option
 		assertThrows(
 			SecurityException.class,
-			() -> QCIR2PNF.main(new String[] {
+			() -> qcir2pnf.main(new String[] {
 				"--illegal",
 				inputLNCS.toString(),
 				output.toString()
@@ -428,7 +428,7 @@ class QCIR2PNFTest {
 		// -s: missing class
 		assertThrows(
 			SecurityException.class,
-			() -> QCIR2PNF.main(new String[] {
+			() -> qcir2pnf.main(new String[] {
 				"-s",
 				inputLNCS.toString(),
 				output.toString()
@@ -437,7 +437,7 @@ class QCIR2PNFTest {
 
 		assertThrows(
 			SecurityException.class,
-			() -> QCIR2PNF.main(new String[] {
+			() -> qcir2pnf.main(new String[] {
 				"-s",
 				"--cleanse",
 				inputLNCS.toString(),
@@ -448,7 +448,7 @@ class QCIR2PNFTest {
 		// -s: missing in-/output file argument
 		assertThrows(
 			SecurityException.class,
-			() -> QCIR2PNF.main(new String[] {
+			() -> qcir2pnf.main(new String[] {
 				"-s",
 				output.toString()
 			}));
@@ -457,7 +457,7 @@ class QCIR2PNFTest {
 		// -s: non-existing class
 		assertThrows(
 			SecurityException.class,
-			() -> QCIR2PNF.main(new String[] {
+			() -> qcir2pnf.main(new String[] {
 				"-s",
 				"non.existing.Strategy",
 				inputLNCS.toString(),
@@ -468,7 +468,7 @@ class QCIR2PNFTest {
 		// --strategy: missing class
 		assertThrows(
 			SecurityException.class,
-			() -> QCIR2PNF.main(new String[] {
+			() -> qcir2pnf.main(new String[] {
 				"--strategy",
 				inputLNCS.toString(),
 				output.toString()
@@ -477,7 +477,7 @@ class QCIR2PNFTest {
 
 		assertThrows(
 			SecurityException.class,
-			() -> QCIR2PNF.main(new String[] {
+			() -> qcir2pnf.main(new String[] {
 				"--strategy=",
 				"--cleanse",
 				inputLNCS.toString(),
@@ -488,7 +488,7 @@ class QCIR2PNFTest {
 		// -s: non-existing class
 		assertThrows(
 			SecurityException.class,
-			() -> QCIR2PNF.main(new String[] {
+			() -> qcir2pnf.main(new String[] {
 				"--strategy=non.existing.Strategy",
 				inputLNCS.toString(),
 				output.toString()
@@ -498,7 +498,7 @@ class QCIR2PNFTest {
 		// -c: non-existing class
 		assertThrows(
 			SecurityException.class,
-			() -> QCIR2PNF.main(new String[] {
+			() -> qcir2pnf.main(new String[] {
 				"-c",
 				"non.existing.CNFEncoder",
 				inputLNCS.toString(),
@@ -509,7 +509,7 @@ class QCIR2PNFTest {
 		// --cnf: non-existing class
 		assertThrows(
 			SecurityException.class,
-			() -> QCIR2PNF.main(new String[] {
+			() -> qcir2pnf.main(new String[] {
 				"--cnf=non.existing.CNFEncoder",
 				inputLNCS.toString(),
 				output.toString()

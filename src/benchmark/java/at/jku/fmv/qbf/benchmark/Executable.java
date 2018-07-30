@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.openjdk.jmh.annotations.*;
 
-import main.QCIR2PNF;
+import main.qcir2pnf;
 
 @BenchmarkMode(Mode.SingleShotTime)
 @Warmup(iterations = 0)
@@ -16,7 +16,7 @@ public class Executable extends Benchmarks {
 
 	@Benchmark
 	public void qcir2pnf(Variables v) throws IOException {
-		QCIR2PNF.main(new String[] {
+		qcir2pnf.main(new String[] {
 			v.file.toString(),
 			createTempFile("qcir2pnf", ".qcir").toString()
 		});

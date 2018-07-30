@@ -26,7 +26,7 @@ import at.jku.fmv.qbf.pcnf.PG86;
 import at.jku.fmv.qbf.pnf.ForAllUpExistsUp;
 import at.jku.fmv.qbf.pnf.PrenexingStrategy;
 
-public class QCIR2PNF {
+public class qcir2pnf {
 
 	private static final Class<? extends PrenexingStrategy> defaultStrategy =
 		ForAllUpExistsUp.class;
