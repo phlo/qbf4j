@@ -9,6 +9,16 @@ import java.util.stream.Stream;
 import at.jku.fmv.qbf.QBF;
 import at.jku.fmv.qbf.QBF.*;
 
+/**
+ * An optimized variant of Tseitin transformation [PG86].
+ * <p>
+ * Removes constraints of unnegated And/Or nodes.
+ * <p>
+ * [PG86] D. A. Plaisted and S. Greenbaum. A Structure-Preserving Clause Form
+ * Translation. <i>Journal of Symbolic Computation</i>, 2(3): 293-304, 1986.
+ *
+ * @author phlo
+ */
 public class PG86 implements CNFEncoder {
 
 	private final String prefix = "_pg";
@@ -76,10 +86,6 @@ public class PG86 implements CNFEncoder {
 			List<QBF> clauses = streamClauses(skeleton)
 				.collect(Collectors.toList());
 			clauses.add(0, getAuxiliary(skeleton));
-	//		List<QBF> cls = Stream.concat(
-	//			Stream.of(getAuxiliary(skeleton)),
-	//			streamClauses(skeleton))
-	//			.collect(Collectors.toList());
 			return clauses;
 		} catch (IllegalArgumentException e) {
 			throw e;

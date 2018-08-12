@@ -63,7 +63,7 @@
     <jar jarfile="${dist}/qcir2pnf.jar"
       basedir="${bin.main}">
       <manifest>
-        <attribute name="Main-Class" value="main.QCIR2PNF"/>
+        <attribute name="Main-Class" value="main.qcir2pnf"/>
       </manifest>
     </jar>
 
@@ -82,7 +82,10 @@
 
   <target name="doc">
     <mkdir dir="${doc}"/>
-    <javadoc sourcepath="${src.main.java}" destdir="${doc}" />
+    <javadoc sourcepath="${src.main.java}"
+      destdir="${doc}"
+      encoding="utf8" docencoding="utf8" charset="utf8"
+      link="https://docs.oracle.com/javase/8/docs/api/"/>
   </target>
 
   <!-- unit tests -->

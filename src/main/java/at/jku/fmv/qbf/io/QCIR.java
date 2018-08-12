@@ -22,8 +22,13 @@ import at.jku.fmv.qbf.QBF.*;
 import at.jku.fmv.qbf.io.util.*;
 
 /**
- *
- * See http://qbf.satisfiability.org/gallery/qcir-gallery14.pdf for details.
+ * A class for reading and writing QCIR-G14 files.
+ * <p>
+ * See
+ * <a href="http://qbf.satisfiability.org/gallery/qcir-gallery14.pdf">
+ * http://qbf.satisfiability.org/gallery/qcir-gallery14.pdf
+ * </a>
+ * for details on the file format.
  *
  * @author phlo
  */
@@ -32,6 +37,13 @@ public final class QCIR {
 	// prevent instantiation
 	private QCIR() {}
 
+	/**
+	 * Reads a given QCIR file.
+	 *
+	 * @param file a file {@link Path}
+	 * @return the contained {@link QBF}
+	 * @throws IOException if the given {@link Path} is not accessible
+	 */
 	public static QBF read(Path file) throws IOException {
 
 		List<String> lines = Files.readAllLines(file);
@@ -174,6 +186,14 @@ public final class QCIR {
 		return formula;
 	}
 
+	/**
+	 * Writes the given {@link QBF} to a QCIR file.
+	 *
+	 * @param formula a {@link QBF} worth saving
+	 * @param file a file {@link Path}
+	 * @param isCleansed write in cleansed form
+	 * @throws IOException if the given {@link Path} is not accessible
+	 */
 	public static void write(QBF formula, Path file, boolean isCleansed)
 		throws IOException {
 

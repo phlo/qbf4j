@@ -1,6 +1,13 @@
 package at.jku.fmv.qbf.pnf;
 
-// ∀↑∃↓ - prioritize universal quantifiers
+/**
+ * ∀↑∃↓ (prioritizing universal quantifiers)
+ * <p>
+ * Places universal quantifiers as high and existential quantifiers as low as
+ * possible.
+ *
+ * @author phlo
+ */
 public class ForAllUpExistsDown extends SimpleUpDownStrategy {
 
 	boolean selectForAll(long numQPath, long numCritical) { return true; }

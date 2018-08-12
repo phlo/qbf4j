@@ -110,7 +110,7 @@ public class ShiftingStrategyTest {
 			new Exists(existsAndEqualQPaths, "x11");
 
 		assertEquals(
-			"∃x11: ∃x10: (∀x1: ∃x2: ∀x3: ϕ0 ∧ ∀x4: ∃x5: ∀x6: ϕ1 ∧ ∀x7: ∃x8: ∀x9: ϕ2)",
+			"∃x10,x11: (∀x1: ∃x2: ∀x3: ϕ0 ∧ ∀x4: ∃x5: ∀x6: ϕ1 ∧ ∀x7: ∃x8: ∀x9: ϕ2)",
 			existsExistsAndEqualQPaths.toString());
 		result = existsExistsAndEqualQPaths.toPNF(dummy);
 		assertEquals(

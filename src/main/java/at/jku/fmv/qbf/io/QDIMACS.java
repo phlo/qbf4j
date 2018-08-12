@@ -16,7 +16,13 @@ import at.jku.fmv.qbf.QBF.*;
 import at.jku.fmv.qbf.io.util.*;
 
 /**
- * See http://www.qbflib.org/qdimacs.html for details.
+ * A class for reading and writing QDIMACS files.
+ * <p>
+ * See
+ * <a href="http://www.qbflib.org/qdimacs.html">
+ * http://www.qbflib.org/qdimacs.html
+ * </a>
+ * for details on the file format.
  *
  * @author phlo
  */
@@ -25,6 +31,13 @@ public class QDIMACS {
 	// prevent instantiation
 	private QDIMACS() {}
 
+	/**
+	 * Reads a given QDIMACS file.
+	 *
+	 * @param file a file {@link Path}
+	 * @return the contained {@link QBF}
+	 * @throws IOException if the given {@link Path} is not accessible
+	 */
 	public static QBF read(Path file) throws IOException {
 
 		List<String> lines = Files.lines(file).collect(Collectors.toList());
@@ -99,6 +112,13 @@ public class QDIMACS {
 		return formula;
 	}
 
+	/**
+	 * Writes the given {@link QBF} to a QDIMACS file.
+	 *
+	 * @param formula a {@link QBF} worth saving
+	 * @param file a file {@link Path}
+	 * @throws IOException if the given {@link Path} is not accessible
+	 */
 	public static void write(QBF formula, Path file) throws IOException {
 		try (BufferedWriter bw = Files.newBufferedWriter(file)) {
 			Consumer<QBF> noCNF = f -> {
