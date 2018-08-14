@@ -39,7 +39,7 @@ public class QBFSizeAgent {
 //			return formula.apply(
 //					(True t) -> instrumentation.getObjectSize(t),
 //					(False f) -> instrumentation.getObjectSize(f),
-//					(Literal lit) -> instrumentation.getObjectSize(lit),
+//					(Literal var) -> instrumentation.getObjectSize(var),
 //					(Not not) -> instrumentation.getObjectSize(not) + sizeOfRecursive(not.subformula),
 //					(And and) ->
 //						instrumentation.getObjectSize(and) +
@@ -79,7 +79,7 @@ public class QBFSizeAgent {
 //				size += cur.apply(
 //					(True t) -> instrumentation.getObjectSize(t),
 //					(False f) -> instrumentation.getObjectSize(f),
-//					(Literal lit) -> instrumentation.getObjectSize(lit),
+//					(Literal var) -> instrumentation.getObjectSize(var),
 //					(Not not) -> {
 //						stack.push(not.subformula);
 //						return instrumentation.getObjectSize(not);
@@ -118,7 +118,7 @@ public class QBFSizeAgent {
 			return formula.apply(
 					(True t) -> instrumentation.getObjectSize(t),
 					(False f) -> instrumentation.getObjectSize(f),
-					(Literal lit) -> instrumentation.getObjectSize(lit),
+					(Variable var) -> instrumentation.getObjectSize(var),
 					(Not not) -> instrumentation.getObjectSize(not) + sizeOf(not.subformula),
 					(And and) ->
 						instrumentation.getObjectSize(and) +
@@ -143,7 +143,7 @@ public class QBFSizeAgent {
 //		return formula.apply(
 //			t -> Stream.empty(),
 //			f -> Stream.empty(),
-//			lit -> Stream.empty(),
+//			var -> Stream.empty(),
 //			not -> Stream.of(not.subformula),
 //			and -> and.subformulas.stream(),
 //			or -> or.subformulas.stream(),

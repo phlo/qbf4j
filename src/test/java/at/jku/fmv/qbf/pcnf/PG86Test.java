@@ -19,10 +19,10 @@ class PG86Test {
 	void encode() {
 		PG86 pg86 = new PG86();
 
-		Literal x1 = new Literal("x1");
-		Literal x2 = new Literal("x2");
-		Literal x3 = new Literal("x3");
-		Literal x4 = new Literal("x4");
+		Variable x1 = new Variable("x1");
+		Variable x2 = new Variable("x2");
+		Variable x3 = new Variable("x3");
+		Variable x4 = new Variable("x4");
 
 		QBF and = new And(x1, x2);
 		assertEquals(and, pg86.apply(and));
@@ -45,7 +45,7 @@ class PG86Test {
 		QBF andOr = new And(or, new Or(x3, x4));
 		assertEquals(andOr, pg86.apply(andOr));
 
-		QBF nonPrenex = new Or(x1, new Exists(new Or(x2, x3), x2.variable));
+		QBF nonPrenex = new Or(x1, new Exists(new Or(x2, x3), x2.name));
 		assertThrows(
 			IllegalArgumentException.class,
 			() -> pg86.apply(nonPrenex));

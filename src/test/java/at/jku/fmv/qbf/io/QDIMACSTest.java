@@ -34,9 +34,9 @@ public class QDIMACSTest {
 					new ForAll(
 						new Exists(
 							new And(
-								new Literal("1"),
-								new Literal("2"),
-								new Literal("3")),
+								new Variable("1"),
+								new Variable("2"),
+								new Variable("3")),
 							"8"),
 						"7"),
 					"6", "10"),
@@ -60,20 +60,20 @@ public class QDIMACSTest {
 		new ForAll(
 			new Exists(
 				new And(
-					new Literal("1"),
+					new Variable("1"),
 					new Or(
-						new Not(new Literal("1")),
-						new Literal("2"),
-						new Literal("3")),
+						new Not(new Variable("1")),
+						new Variable("2"),
+						new Variable("3")),
 					new Or(
-						new Not(new Literal("3")),
-						new Literal("4")),
+						new Not(new Variable("3")),
+						new Variable("4")),
 					new Or(
-						new Not(new Literal("3")),
-						new Literal("5")),
+						new Not(new Variable("3")),
+						new Variable("5")),
 					new Or(
-						new Not(new Literal("3")),
-						new Literal("2"))),
+						new Not(new Variable("3")),
+						new Variable("2"))),
 				"4", "5"),
 			"2");
 	public static List<String> g14QDIMACS = Arrays.asList(new String[] {
@@ -90,10 +90,10 @@ public class QDIMACSTest {
 	// propositional formula
 	public static QBF propositional =
 		new And(
-			new Literal("1"),
-			new Or(new Literal("2"), new Not(new Literal("3"))),
-			new Or(new Not(new Literal("2")), new Literal("3")),
-			new Not(new Literal("4"))
+			new Variable("1"),
+			new Or(new Variable("2"), new Not(new Variable("3"))),
+			new Or(new Not(new Variable("2")), new Variable("3")),
+			new Not(new Variable("4"))
 		);
 	public static List<String> propositionalQDIMACS =
 		Arrays.asList(new String[] {

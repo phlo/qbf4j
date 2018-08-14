@@ -76,7 +76,7 @@ public abstract class ShiftingStrategy implements PrenexingStrategy {
 		assert qpath.streamPrefix().count() == variableOrdering.size();
 
 		return qpath.apply(
-			t -> skeleton, f -> skeleton, lit -> skeleton,
+			t -> skeleton, f -> skeleton, var -> skeleton,
 			not -> skeleton, and -> skeleton, or -> skeleton,
 			forall -> {
 				Set<String> variables = variableOrdering.remove(0);

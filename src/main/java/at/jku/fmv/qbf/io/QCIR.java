@@ -67,14 +67,14 @@ public final class QCIR {
 
 			Function<Stream<String>, List<QBF>> getOperands = s -> {
 
-				Function<String, QBF> getLiteralOrFormula = id ->
+				Function<String, QBF> getVariableOrFormula = id ->
 					subformulas.containsKey(id)
 						? subformulas.get(id)
-						: new Literal(id);
+						: new Variable(id);
 				return
 					s.map(id -> id.startsWith("-")
-						? new Not(getLiteralOrFormula.apply(id.substring(1)))
-						: getLiteralOrFormula.apply(id))
+						? new Not(getVariableOrFormula.apply(id.substring(1)))
+						: getVariableOrFormula.apply(id))
 					.collect(Collectors.toList());
 			};
 
@@ -290,7 +290,7 @@ public final class QCIR {
 				buffer.append(gate.apply(
 					(True t) -> "and()",
 					(False f) -> "or()",
-					(Literal lit) -> illegalArgument.apply(lit),
+					(Variable var) -> illegalArgument.apply(var),
 					(Not not) -> illegalArgument.apply(not),
 					(And and) -> buildGate.apply("and", and),
 					(Or or) -> buildGate.apply("or", or),
@@ -316,7 +316,7 @@ public final class QCIR {
 				formula.accept(
 					t -> appendGate(t),
 					f -> appendGate(f),
-					lit -> gates.putIfAbsent(lit, lit.variable),
+					var -> gates.putIfAbsent(var, var.name),
 					not -> appendGates(not.subformula),
 					and -> appendGate.accept(and),
 					or -> appendGate.accept(or),
@@ -437,7 +437,7 @@ public final class QCIR {
 					+ gate.apply(
 						t -> "and()",
 						f -> "or()",
-						lit -> illegalArgument.apply(lit),
+						var -> illegalArgument.apply(var),
 						not -> illegalArgument.apply(not),
 						and -> buildGate.apply("and", and),
 						or -> buildGate.apply("or", or),
@@ -467,7 +467,7 @@ public final class QCIR {
 				formula.accept(
 					t -> appendGate(t),
 					f -> appendGate(f),
-					lit -> gates.putIfAbsent(lit, lit.variable),
+					var -> gates.putIfAbsent(var, var.name),
 					not -> appendGates(not.subformula),
 					and -> appendGate.accept(and),
 					or -> appendGate.accept(or),

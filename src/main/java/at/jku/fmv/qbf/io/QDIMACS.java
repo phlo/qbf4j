@@ -49,8 +49,8 @@ public class QDIMACS {
 
 		Function<String, QBF> parseLiteral = s ->
 			s.startsWith("-")
-				? new Not(new Literal(s.substring(1)))
-				: new Literal(s);
+				? new Not(new Variable(s.substring(1)))
+				: new Variable(s);
 
 		Function<String, QBF> parseClause = line -> {
 
@@ -144,17 +144,17 @@ public class QDIMACS {
 					.peek(variables::add)
 					.collect(Collectors.joining(" "));
 
-			Function<QBF, String> getLiteral = lit -> {
-				String var = lit.isLiteral()
-					? lit.isNegation()
-						? ((Literal) ((Not) lit).subformula).variable
-						: ((Literal) lit).variable
+			Function<QBF, String> getVariable = v -> {
+				String var = v.isVariable()
+					? v.isNegation()
+						? ((Variable) ((Not) v).subformula).name
+						: ((Variable) v).name
 					: null;
 
-				if (var == null) noCNF.accept(lit);
+				if (var == null) noCNF.accept(v);
 
 				variables.add(var);
-				return lit.isNegation() ? "-" + var : var;
+				return v.isNegation() ? "-" + var : var;
 			};
 
 			Consumer<String> appendLine = s -> buffer.append(s + " 0\n");
@@ -177,16 +177,16 @@ public class QDIMACS {
 
 			// append matrix
 			matrix[0].accept(illegalTrue, illegalFalse,
-				lit -> appendClause.accept(getLiteral.apply(lit)),
-				not -> appendClause.accept(getLiteral.apply(not)),
+				var -> appendClause.accept(getVariable.apply(var)),
+				not -> appendClause.accept(getVariable.apply(not)),
 				and -> and.subformulas.stream().forEach(f ->
 					f.accept(illegalTrue, illegalFalse,
-						lit -> appendClause.accept(getLiteral.apply(lit)),
-						not -> appendClause.accept(getLiteral.apply(not)),
+						var -> appendClause.accept(getVariable.apply(var)),
+						not -> appendClause.accept(getVariable.apply(not)),
 						illegalAnd,
 						or -> appendClause.accept(
 							or.subformulas.stream()
-								.map(getLiteral)
+								.map(getVariable)
 								.collect(Collectors.joining(" "))),
 						illegalForAll, illegalExists)),
 				illegalOr, illegalForAll, illegalExists

@@ -51,8 +51,8 @@ public abstract class QBF {
 	 * {@link Consumer} accepting the {@link True boolean constant true}
 	 * @param f
 	 * {@link Consumer} accepting the {@link False boolean constant false}
-	 * @param lit
-	 * {@link Consumer} accepting {@link Literal variables}
+	 * @param var
+	 * {@link Consumer} accepting {@link Variable variables}
 	 * @param not
 	 * {@link Consumer} accepting {@link Not negations}
 	 * @param and
@@ -67,7 +67,7 @@ public abstract class QBF {
 	public abstract void accept(
 		Consumer<True> t,
 		Consumer<False> f,
-		Consumer<Literal> lit,
+		Consumer<Variable> var,
 		Consumer<Not> not,
 		Consumer<And> and,
 		Consumer<Or> or,
@@ -90,7 +90,7 @@ public abstract class QBF {
 		this.accept(
 			t -> { throw new IllegalArgumentException(msg); },
 			f -> { throw new IllegalArgumentException(msg); },
-			lit -> { throw new IllegalArgumentException(msg); },
+			var -> { throw new IllegalArgumentException(msg); },
 			not -> { throw new IllegalArgumentException(msg); },
 			and -> { throw new IllegalArgumentException(msg); },
 			or -> { throw new IllegalArgumentException(msg); },
@@ -107,8 +107,8 @@ public abstract class QBF {
 	 * {@link Function} accepting the {@link True boolean constant true}
 	 * @param f
 	 * {@link Function} accepting the {@link False boolean constant false}
-	 * @param lit
-	 * {@link Function} accepting {@link Literal variables}
+	 * @param var
+	 * {@link Function} accepting {@link Variable variables}
 	 * @param not
 	 * {@link Function} accepting {@link Not negations}
 	 * @param and
@@ -125,7 +125,7 @@ public abstract class QBF {
 	public abstract <T> T apply(
 		Function<True, T> t,
 		Function<False, T> f,
-		Function<Literal, T> lit,
+		Function<Variable, T> var,
 		Function<Not, T> not,
 		Function<And, T> and,
 		Function<Or, T> or,
@@ -152,7 +152,7 @@ public abstract class QBF {
 		return this.apply(
 			t -> { throw new IllegalArgumentException(msg); },
 			f -> { throw new IllegalArgumentException(msg); },
-			lit -> { throw new IllegalArgumentException(msg); },
+			var -> { throw new IllegalArgumentException(msg); },
 			not -> { throw new IllegalArgumentException(msg); },
 			and -> { throw new IllegalArgumentException(msg); },
 			or -> { throw new IllegalArgumentException(msg); },
@@ -179,7 +179,7 @@ public abstract class QBF {
 		public void accept(
 			Consumer<True> t,
 			Consumer<False> f,
-			Consumer<Literal> lit,
+			Consumer<Variable> var,
 			Consumer<Not> not,
 			Consumer<And> and,
 			Consumer<Or> or,
@@ -190,7 +190,7 @@ public abstract class QBF {
 		public <T> T apply(
 			Function<True, T> t,
 			Function<False, T> f,
-			Function<Literal, T> lit,
+			Function<Variable, T> var,
 			Function<Not, T> not,
 			Function<And, T> and,
 			Function<Or, T> or,
@@ -213,7 +213,7 @@ public abstract class QBF {
 		public void accept(
 			Consumer<True> t,
 			Consumer<False> f,
-			Consumer<Literal> lit,
+			Consumer<Variable> var,
 			Consumer<Not> not,
 			Consumer<And> and,
 			Consumer<Or> or,
@@ -224,7 +224,7 @@ public abstract class QBF {
 		public <T> T apply(
 			Function<True, T> t,
 			Function<False, T> f,
-			Function<Literal, T> lit,
+			Function<Variable, T> var,
 			Function<Not, T> not,
 			Function<And, T> and,
 			Function<Or, T> or,
@@ -240,39 +240,39 @@ public abstract class QBF {
 	 *
 	 * @author phlo
 	 */
-	public static final class Literal extends Terminal {
+	public static final class Variable extends Terminal {
 
 		private final int hash;
 
-		public final String variable;
+		public final String name;
 
 		public void accept(
 			Consumer<True> t,
 			Consumer<False> f,
-			Consumer<Literal> lit,
+			Consumer<Variable> var,
 			Consumer<Not> not,
 			Consumer<And> and,
 			Consumer<Or> or,
 			Consumer<ForAll> forall,
 			Consumer<Exists> exists
-		) { lit.accept(this); }
+		) { var.accept(this); }
 
 		public <T> T apply(
 			Function<True, T> t,
 			Function<False, T> f,
-			Function<Literal, T> lit,
+			Function<Variable, T> var,
 			Function<Not, T> not,
 			Function<And, T> and,
 			Function<Or, T> or,
 			Function<ForAll, T> forall,
 			Function<Exists, T> exists
-		) { return lit.apply(this); }
+		) { return var.apply(this); }
 
-		public Literal(String variable) {
-			if (variable == null || variable.isEmpty())
+		public Variable(String name) {
+			if (name == null || name.isEmpty())
 				throw new IllegalArgumentException("missing variable");
 
-			this.variable = variable;
+			this.name = name;
 
 			this.hash = this.hash();
 		}
@@ -307,7 +307,7 @@ public abstract class QBF {
 		public void accept(
 			Consumer<True> t,
 			Consumer<False> f,
-			Consumer<Literal> lit,
+			Consumer<Variable> var,
 			Consumer<Not> not,
 			Consumer<And> and,
 			Consumer<Or> or,
@@ -318,7 +318,7 @@ public abstract class QBF {
 		public <T> T apply(
 			Function<True, T> t,
 			Function<False, T> f,
-			Function<Literal, T> lit,
+			Function<Variable, T> var,
 			Function<Not, T> not,
 			Function<And, T> and,
 			Function<Or, T> or,
@@ -361,7 +361,7 @@ public abstract class QBF {
 		public void accept(
 			Consumer<True> t,
 			Consumer<False> f,
-			Consumer<Literal> lit,
+			Consumer<Variable> var,
 			Consumer<Not> not,
 			Consumer<And> and,
 			Consumer<Or> or,
@@ -372,7 +372,7 @@ public abstract class QBF {
 		public <T> T apply(
 			Function<True, T> t,
 			Function<False, T> f,
-			Function<Literal, T> lit,
+			Function<Variable, T> var,
 			Function<Not, T> not,
 			Function<And, T> and,
 			Function<Or, T> or,
@@ -400,7 +400,7 @@ public abstract class QBF {
 		public void accept(
 			Consumer<True> t,
 			Consumer<False> f,
-			Consumer<Literal> lit,
+			Consumer<Variable> var,
 			Consumer<Not> not,
 			Consumer<And> and,
 			Consumer<Or> or,
@@ -411,7 +411,7 @@ public abstract class QBF {
 		public <T> T apply(
 			Function<True, T> t,
 			Function<False, T> f,
-			Function<Literal, T> lit,
+			Function<Variable, T> var,
 			Function<Not, T> not,
 			Function<And, T> and,
 			Function<Or, T> or,
@@ -459,7 +459,7 @@ public abstract class QBF {
 		public void accept(
 			Consumer<True> t,
 			Consumer<False> f,
-			Consumer<Literal> lit,
+			Consumer<Variable> var,
 			Consumer<Not> not,
 			Consumer<And> and,
 			Consumer<Or> or,
@@ -470,7 +470,7 @@ public abstract class QBF {
 		public <T> T apply(
 			Function<True, T> t,
 			Function<False, T> f,
-			Function<Literal, T> lit,
+			Function<Variable, T> var,
 			Function<Not, T> not,
 			Function<And, T> and,
 			Function<Or, T> or,
@@ -481,12 +481,12 @@ public abstract class QBF {
 		public ForAll(QBF subformula, Set<String> variables) {
 			super(
 				subformula == null ? null : subformula.apply(
-					t -> t, f -> f, lit -> lit,
+					t -> t, f -> f, var -> var,
 					not -> not, and -> and, or -> or,
 					forall -> forall == null ? null : forall.subformula,
 					exists -> exists),
 				subformula == null ? null : subformula.apply(
-					t -> variables, f -> variables, lit -> variables,
+					t -> variables, f -> variables, var -> variables,
 					not -> variables, and -> variables, or -> variables,
 					forall -> {
 						HashSet<String> vars = new HashSet<>(variables);
@@ -514,7 +514,7 @@ public abstract class QBF {
 		public void accept(
 			Consumer<True> t,
 			Consumer<False> f,
-			Consumer<Literal> lit,
+			Consumer<Variable> var,
 			Consumer<Not> not,
 			Consumer<And> and,
 			Consumer<Or> or,
@@ -525,7 +525,7 @@ public abstract class QBF {
 		public <T> T apply(
 			Function<True, T> t,
 			Function<False, T> f,
-			Function<Literal, T> lit,
+			Function<Variable, T> var,
 			Function<Not, T> not,
 			Function<And, T> and,
 			Function<Or, T> or,
@@ -536,12 +536,12 @@ public abstract class QBF {
 		public Exists(QBF subformula, Set<String> variables) {
 			super(
 				subformula == null ? null : subformula.apply(
-					t -> t, f -> f, lit -> lit,
+					t -> t, f -> f, var -> var,
 					not -> not, and -> and, or -> or,
 					forall -> forall,
 					exists -> exists == null ? null : exists.subformula),
 				subformula == null ? null : subformula.apply(
-					t -> variables, f -> variables, lit -> variables,
+					t -> variables, f -> variables, var -> variables,
 					not -> variables, and -> variables, or -> variables,
 					forall -> variables,
 					exists -> {
@@ -564,7 +564,7 @@ public abstract class QBF {
 	public static final Predicate<QBF> isConstant = formula ->
 		formula.apply(
 			t -> true, f -> true,
-			lit -> false, not -> false, and -> false,
+			var -> false, not -> false, and -> false,
 			or -> false, forall -> false, exists -> false
 		);
 	/**
@@ -579,7 +579,7 @@ public abstract class QBF {
 	 */
 	public static final Predicate<QBF> isQuantifier = formula ->
 		formula.apply(
-			t -> false, f -> false, lit -> false,
+			t -> false, f -> false, var -> false,
 			not -> false, and -> false, or -> false,
 			forall -> true,
 			exists -> true
@@ -596,7 +596,7 @@ public abstract class QBF {
 	 */
 	public static final Predicate<QBF> isForAll = formula ->
 		formula.apply(
-			t -> false, f -> false, lit -> false,
+			t -> false, f -> false, var -> false,
 			not -> false, and -> false, or -> false,
 			forall -> true,
 			exists -> false
@@ -613,7 +613,7 @@ public abstract class QBF {
 	 */
 	public static final Predicate<QBF> isExists = formula ->
 		formula.apply(
-			t -> false, f -> false, lit -> false,
+			t -> false, f -> false, var -> false,
 			not -> false, and -> false, or -> false,
 			forall -> false,
 			exists -> true
@@ -626,28 +626,28 @@ public abstract class QBF {
 	public boolean isExists() { return isExists.test(this); }
 
 	/**
-	 * Tests if the given instance is a {@link Literal variable}.
+	 * Tests if the given instance is a {@link Variable variable}.
 	 */
-	public static final Predicate<QBF> isLiteral = formula ->
+	public static final Predicate<QBF> isVariable = formula ->
 		formula.apply(
 			t -> false, f -> false,
-			lit -> true,
-			not -> not.subformula.isLiteral(),
+			var -> true,
+			not -> not.subformula.isVariable(),
 			and -> false, or -> false, forall -> false, exists -> false
 		);
 	/**
-	 * Tests if this is a {@link Literal variable}.
+	 * Tests if this is a {@link Variable variable}.
 	 *
-	 * @return {@code true} if this is a {@link Literal variable}
+	 * @return {@code true} if this is a {@link Variable variable}
 	 */
-	public boolean isLiteral() { return isLiteral.test(this); }
+	public boolean isVariable() { return isVariable.test(this); }
 
 	/**
 	 * Tests if the given instance is a {@link Not negation}.
 	 */
 	public static final Predicate<QBF> isNegation = formula ->
 		formula.apply(
-			t -> false, f -> false, lit -> false,
+			t -> false, f -> false, var -> false,
 			not -> true,
 			and -> false, or -> false, forall -> false, exists -> false
 		);
@@ -663,7 +663,7 @@ public abstract class QBF {
 	 */
 	public static final Predicate<QBF> isAnd = formula ->
 		formula.apply(
-			t -> false, f -> false, lit -> false, not -> false,
+			t -> false, f -> false, var -> false, not -> false,
 			and -> true,
 			or -> false, forall -> false, exists -> false
 		);
@@ -679,7 +679,7 @@ public abstract class QBF {
 	 */
 	public static final Predicate<QBF> isOr = formula ->
 		formula.apply(
-			t -> false, f -> false, lit -> false, not -> false, and -> false,
+			t -> false, f -> false, var -> false, not -> false, and -> false,
 			or -> true,
 			forall -> false, exists -> false
 		);
@@ -696,9 +696,9 @@ public abstract class QBF {
 	public static final Predicate<QBF> isCNF = formula ->
 		formula.isAnd()
 			&& ((And) formula).subformulas.stream().allMatch(f ->
-				f.isLiteral()
+				f.isVariable()
 				|| (f.isOr() && ((Or) f).subformulas.stream()
-					.allMatch(QBF::isLiteral)));
+					.allMatch(QBF::isVariable)));
 	/**
 	 * Tests if this formula is in conjunctive normal form.
 	 *
@@ -709,7 +709,7 @@ public abstract class QBF {
 	private static enum HashID {
 		FALSE,
 		TRUE,
-		LITERAL,
+		VARIABLE,
 		NOT,
 		AND,
 		OR,
@@ -721,7 +721,7 @@ public abstract class QBF {
 		return this.apply(
 			t -> HashID.TRUE.ordinal(),
 			f -> HashID.FALSE.ordinal(),
-			lit -> (lit.variable.hashCode() << 3) + HashID.LITERAL.ordinal(),
+			var -> (var.name.hashCode() << 3) + HashID.VARIABLE.ordinal(),
 			not -> (not.subformula.hashCode() << 3) + HashID.NOT.ordinal(),
 			and -> (and.subformulas.hashCode() << 3) + HashID.AND.ordinal(),
 			or -> (or.subformulas.hashCode() << 3) + HashID.OR.ordinal(),
@@ -735,7 +735,7 @@ public abstract class QBF {
 		return this.apply(
 			t -> t.hash,
 			f -> f.hash,
-			lit -> lit.hash,
+			var -> var.hash,
 			not -> not.hash,
 			and -> and.hash,
 			or -> or.hash,
@@ -822,7 +822,7 @@ public abstract class QBF {
 			this.apply(
 				(True t) -> Stream.empty(),
 				(False f) -> Stream.empty(),
-				(Literal lit) -> Stream.empty(),
+				(Variable var) -> Stream.empty(),
 				(Not not) -> not.subformula.stream(traversal),
 				(And and) ->
 					and.subformulas.stream()
@@ -848,7 +848,7 @@ public abstract class QBF {
 		return this.apply(
 			(True t) -> Stream.empty(),
 			(False f) -> Stream.empty(),
-			(Literal lit) -> Stream.of(lit.variable),
+			(Variable var) -> Stream.of(var.name),
 			(Not not) ->
 				not.subformula.streamVariables(),
 			(And and) ->
@@ -875,7 +875,7 @@ public abstract class QBF {
 		return this.apply(
 			(True t) -> Stream.empty(),
 			(False f) -> Stream.empty(),
-			(Literal lit) -> Stream.of(lit.variable),
+			(Variable var) -> Stream.of(var.name),
 			(Not not) ->
 				not.subformula.streamFreeVariables(),
 			(And and) ->
@@ -900,7 +900,7 @@ public abstract class QBF {
 		return this.apply(
 			(True t) -> Stream.empty(),
 			(False f) -> Stream.empty(),
-			(Literal lit) -> Stream.empty(),
+			(Variable var) -> Stream.empty(),
 			(Not not) ->
 				not.subformula.streamBoundVariables(),
 			(And and) ->
@@ -931,7 +931,7 @@ public abstract class QBF {
 		return this.apply(
 			(True t) -> Stream.empty(),
 			(False f) -> Stream.empty(),
-			(Literal lit) -> Stream.empty(),
+			(Variable var) -> Stream.empty(),
 			(Not not) -> Stream.empty(),
 			(And and) -> Stream.empty(),
 			(Or or) -> Stream.empty(),
@@ -974,7 +974,7 @@ public abstract class QBF {
 		return this.apply(
 			(True t) -> Stream.empty(),
 			(False f) -> Stream.empty(),
-			(Literal lit) -> Stream.empty(),
+			(Variable var) -> Stream.empty(),
 			(Not not) -> Stream.empty(),
 			(And and) ->
 				and.subformulas.stream()
@@ -1093,10 +1093,10 @@ public abstract class QBF {
 	 */
 	public QBF getSkeleton() {
 		return this.apply(
-			t -> t, f -> f, lit -> lit,
+			t -> t, f -> f, var -> var,
 			(Not not) ->
 				not.subformula.apply(
-					t -> not, f -> not, lit -> not,
+					t -> not, f -> not, var -> not,
 					not2 -> new Not(not2.getSkeleton()),
 					and -> new Not(and.getSkeleton()),
 					or -> new Not(or.getSkeleton()),
@@ -1128,9 +1128,9 @@ public abstract class QBF {
 	@Deprecated
 	public QBF unifyPrefix() {
 		return this.apply(
-			t -> t, f -> f, lit -> lit, not -> not, and -> and, or -> or,
+			t -> t, f -> f, var -> var, not -> not, and -> and, or -> or,
 			(ForAll forall1) -> forall1.subformula.apply(
-				t -> forall1, f -> forall1, lit -> forall1, not -> forall1, and -> forall1, or -> forall1,
+				t -> forall1, f -> forall1, var -> forall1, not -> forall1, and -> forall1, or -> forall1,
 				(ForAll forall2) ->
 					new ForAll(
 						forall2.subformula,
@@ -1141,7 +1141,7 @@ public abstract class QBF {
 				(Exists exists) -> new ForAll(exists.unifyPrefix(), forall1.variables)
 			),
 			(Exists exists1) -> exists1.subformula.apply(
-				t -> exists1, f -> exists1, lit -> exists1, not -> exists1, and -> exists1, or -> exists1,
+				t -> exists1, f -> exists1, var -> exists1, not -> exists1, and -> exists1, or -> exists1,
 				(ForAll forall) -> new Exists(forall.unifyPrefix(), exists1.variables),
 				(Exists exists2) ->
 					new Exists(
@@ -1163,7 +1163,7 @@ public abstract class QBF {
 		return this.apply(
 			(True t) -> False,
 			(False f) -> True,
-			(Literal lit) -> new Not(lit),
+			(Variable var) -> new Not(var),
 			(Not not) -> not.subformula,
 			(And and) -> new Not(and),
 			(Or or) -> new Not(or),
@@ -1182,10 +1182,10 @@ public abstract class QBF {
 		return this.apply(
 			(True t) -> t,
 			(False f) -> f,
-			(Literal lit) ->
-				variables.containsKey(lit.variable)
-					? new Literal(variables.get(lit.variable))
-					: lit,
+			(Variable var) ->
+				variables.containsKey(var.name)
+					? new Variable(variables.get(var.name))
+					: var,
 			(Not not) -> new Not(not.subformula.rename(variables)),
 			(And and) ->
 				new And(
@@ -1271,17 +1271,17 @@ public abstract class QBF {
 				this.formula = formula.apply(
 					(True t) -> t,
 					(False f) -> f,
-					(Literal lit) -> {
-						if (bound.containsKey(lit.variable))
-							bound.compute(lit.variable, (k, v) ->
+					(Variable var) -> {
+						if (bound.containsKey(var.name))
+							bound.compute(var.name, (k, v) ->
 								v == null ? Integer.toString(counter[0]++) : v);
 
-						return new Literal(
-							bound.containsKey(lit.variable)
-								? bound.get(lit.variable)
-								: free.containsKey(lit.variable)
-									? free.get(lit.variable)
-									: free.computeIfAbsent(lit.variable,
+						return new Variable(
+							bound.containsKey(var.name)
+								? bound.get(var.name)
+								: free.containsKey(var.name)
+									? free.get(var.name)
+									: free.computeIfAbsent(var.name,
 										v -> Integer.toString(counter[0]++)));
 					},
 					(Not not) -> new Not(new Cleaner(not.subformula).formula),
@@ -1311,11 +1311,11 @@ public abstract class QBF {
 		return this.apply(
 			(True t) -> t,
 			(False f) -> f,
-			(Literal lit) -> lit,
+			(Variable var) -> var,
 			(Not not) -> not.subformula.apply(
 				(True t) -> False,
 				(False f) -> True,
-				(Literal lit) -> not,
+				(Variable var) -> not,
 				(Not impossible) -> not,
 				(And and) ->
 					new Or(
@@ -1410,7 +1410,7 @@ public abstract class QBF {
 		return this.apply(
 			(True t) -> "TRUE",
 			(False f) -> "FALSE",
-			(Literal lit) -> lit.variable.toString(),
+			(Variable var) -> var.name.toString(),
 			(Not not) -> "-" + not.subformula.toString(),
 			(And and) ->
 				"(" +

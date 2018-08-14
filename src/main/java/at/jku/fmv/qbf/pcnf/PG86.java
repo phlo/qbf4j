@@ -28,14 +28,14 @@ public class PG86 implements CNFEncoder {
 	private int counter = 0;
 
 	private QBF getAuxiliary(QBF gate) {
-		return gate.isLiteral()
+		return gate.isVariable()
 			? gate
 			: auxiliary.containsKey(gate)
 				? auxiliary.get(gate)
 				: auxiliary.compute(
 					gate,
 					(k, v) ->
-						new Literal(
+						new Variable(
 							prefix + Integer.toString(counter++)));
 	}
 
@@ -68,7 +68,7 @@ public class PG86 implements CNFEncoder {
 		return skeleton.apply(
 			(True t) -> Stream.empty(),
 			(False f) -> Stream.empty(),
-			(Literal lit) -> Stream.empty(),
+			(Variable var) -> Stream.empty(),
 			(Not not) -> Stream.empty(),
 			(And and) -> Stream.concat(
 				encodeAnd(and),
