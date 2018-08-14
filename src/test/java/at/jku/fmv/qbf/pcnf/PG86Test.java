@@ -25,12 +25,12 @@ class PG86Test {
 		Variable x4 = new Variable("x4");
 
 		QBF and = new And(x1, x2);
-		assertEquals(and, pg86.apply(and));
+		assertEquals(and, pg86.encode(and));
 
 		QBF or = new Or(x1, x2);
 		assertEquals(
 			"(_pg0 ∧ (-_pg0 ∨ x1 ∨ x2))",
-			pg86.apply(or).toString());
+			pg86.encode(or).toString());
 
 		QBF orAnd = new Or(and, new And(x3, x4));
 		assertEquals(
@@ -40,15 +40,15 @@ class PG86Test {
 			+ "∧ (-_pg1 ∨ x2) "
 			+ "∧ (-_pg2 ∨ x3) "
 			+ "∧ (-_pg2 ∨ x4))",
-			pg86.apply(orAnd).toString());
+			pg86.encode(orAnd).toString());
 
 		QBF andOr = new And(or, new Or(x3, x4));
-		assertEquals(andOr, pg86.apply(andOr));
+		assertEquals(andOr, pg86.encode(andOr));
 
 		QBF nonPrenex = new Or(x1, new Exists(new Or(x2, x3), x2.name));
 		assertThrows(
 			IllegalArgumentException.class,
-			() -> pg86.apply(nonPrenex));
+			() -> pg86.encode(nonPrenex));
 
 		PrenexingStrategy aueu = new ForAllUpExistsUp();
 

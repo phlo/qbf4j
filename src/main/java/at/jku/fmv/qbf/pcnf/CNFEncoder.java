@@ -27,13 +27,13 @@ public interface CNFEncoder {
 	 * @param pnf {@link QBF} in PNF
 	 * @return {@link QBF} in PCNF
 	 */
-	public default QBF apply(QBF pnf) {
+	public default QBF encode(QBF pnf) {
 		Function<QBF, QBF> applySkeleton = s ->
 			s.isCNF() ? s : new And(getClauses(s));
 
 		Function<Quantifier, QBF> applyQuantifier = q ->
 			q.subformula.isQuantifier()
-				? apply(q.subformula)
+				? encode(q.subformula)
 				: applySkeleton.apply(q.subformula);
 
 		return pnf.isQuantifier()

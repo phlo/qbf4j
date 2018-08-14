@@ -1375,7 +1375,7 @@ public abstract class QBF {
 	 * @return this {@link QBF} in prenex conjunctive normal form
 	 */
 	public QBF toPCNF(PrenexingStrategy strategy, CNFEncoder encoder) {
-		return encoder.apply(toPNF(strategy));
+		return encoder.encode(toPNF(strategy));
 	}
 
 	/**
