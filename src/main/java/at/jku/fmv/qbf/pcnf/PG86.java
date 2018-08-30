@@ -28,7 +28,7 @@ public class PG86 implements CNFEncoder {
 	private int counter = 0;
 
 	private QBF getAuxiliary(QBF gate) {
-		return gate.isVariable()
+		return gate.isLiteral()
 			? gate
 			: auxiliary.containsKey(gate)
 				? auxiliary.get(gate)

@@ -632,7 +632,7 @@ public abstract class QBF {
 		formula.apply(
 			t -> false, f -> false,
 			var -> true,
-			not -> not.subformula.isVariable(),
+			not -> false,
 			and -> false, or -> false, forall -> false, exists -> false
 		);
 	/**
@@ -641,6 +641,23 @@ public abstract class QBF {
 	 * @return {@code true} if this is a {@link Variable variable}
 	 */
 	public boolean isVariable() { return isVariable.test(this); }
+
+	/**
+	 * Tests if the given instance is a literal.
+	 */
+	public static final Predicate<QBF> isLiteral = formula ->
+		formula.apply(
+			t -> false, f -> false,
+			var -> true,
+			not -> not.subformula.isLiteral(),
+			and -> false, or -> false, forall -> false, exists -> false
+		);
+	/**
+	 * Tests if this is a literal.
+	 *
+	 * @return {@code true} if this is a literal.
+	 */
+	public boolean isLiteral() { return isLiteral.test(this); }
 
 	/**
 	 * Tests if the given instance is a {@link Not negation}.
@@ -696,9 +713,9 @@ public abstract class QBF {
 	public static final Predicate<QBF> isCNF = formula ->
 		formula.isAnd()
 			&& ((And) formula).subformulas.stream().allMatch(f ->
-				f.isVariable()
+				f.isLiteral()
 				|| (f.isOr() && ((Or) f).subformulas.stream()
-					.allMatch(QBF::isVariable)));
+					.allMatch(QBF::isLiteral)));
 	/**
 	 * Tests if this formula is in conjunctive normal form.
 	 *

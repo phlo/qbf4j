@@ -145,7 +145,7 @@ public class QDIMACS {
 					.collect(Collectors.joining(" "));
 
 			Function<QBF, String> getVariable = v -> {
-				String var = v.isVariable()
+				String var = v.isLiteral()
 					? v.isNegation()
 						? ((Variable) ((Not) v).subformula).name
 						: ((Variable) v).name
