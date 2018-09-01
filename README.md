@@ -71,7 +71,3 @@ To show an overview of a benchmark's result in markdown format, a simple python 
 A properties file for customizing certain benchmark parameters can be found at `src/benchmark/resources/benchmark.properties`.
 
 After changing the properties file, either run `ant benchmark` to rebuild the `jar` file or include it in the classpath when running a benchmark.
-
-## License
-
-MIT?
