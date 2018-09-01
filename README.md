@@ -66,6 +66,14 @@ After building the benchmarks using `ant benchmark`, see `java -jar dist/qbf4j-V
 
 To show an overview of a benchmark's result in markdown format, a simple python script is included at `src/benchmark/python/printBenchmark.py`.
 
+### Testsets
+
+Any `*.qcir` or `*.qdimacs` file can be used for running benchmarks.
+
+The following bash scripts may be used to download a testset:
+* [qcir non-prenex testset](https://phlo.github.io/qbf4j/files/dl-qcir-non-prenex.sh)  ([archive](https://phlo.github.io/qbf4j/files/qcir-non-prenex.tar.xz)) *default*
+* [qbfeval'17 testset](https://phlo.github.io/qbf4j/files/dl-qbfeval17.sh)
+
 ### Configuration
 
 A properties file for customizing certain benchmark parameters can be found at `src/benchmark/resources/benchmark.properties`.
