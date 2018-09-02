@@ -66,7 +66,7 @@ After building the benchmarks using `ant benchmark`, see `java -jar dist/qbf4j-V
 
 Listing all available benchmarks is done using:
 ```
-java -jar dist/qbf4j-VERSION-benchmark.jar -l | sed 's/at.*benchmark.//g
+java -jar dist/qbf4j-VERSION-benchmark.jar -l | sed 's/at.*benchmark.//g'
 ```
 
 For running a preconfigured version of a specific benchmark use:
