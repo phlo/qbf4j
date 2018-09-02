@@ -1,11 +1,11 @@
 # [qbf4j](https://github.com/phlo/qbf4j)
 
 [QBF](https://phlo.github.io/qbf4j/at/jku/fmv/qbf/QBF.html) is an immutable data structure, representing quantified boolean formula trees containing the following connectives:
-* `¬` -- negation
-* `∧` -- conjunction
-* `∨` -- disjunction
-* `∀` -- universal quantification
-* `∃` -- existential quantification
+* `¬` - negation
+* `∧` - conjunction
+* `∨` - disjunction
+* `∀` - universal quantification
+* `∃` - existential quantification
 
 ## Features
 
@@ -64,13 +64,30 @@ Usage: qcir2pnf [OPTION]... <input-file> <output-file>
 
 After building the benchmarks using `ant benchmark`, see `java -jar dist/qbf4j-VERSION-benchmark.jar -h` for available command line options.
 
+Listing all available benchmarks is done using:
+```
+java -jar dist/qbf4j-VERSION-benchmark.jar -l | sed 's/at.*benchmark.//g
+```
+
+For running a preconfigured version of a specific benchmark use:
+```
+java -cp dist/qbf4j-VERSION-benchmark.jar <benchmark>
+```
+
 To show an overview of a benchmark's result in markdown format, a simple python script is included at `src/benchmark/python/printBenchmark.py`.
 
-### Testsets
+### Tree Size
+
+To measure the formula tree size of the given test set run:
+```
+java -cp dist/qbf4j-VERSION-benchmark.jar -javaagent:lib/QBFSizeAgent.jar QBF.MemoryConsumption
+```
+
+### Test Sets
 
 Any `*.qcir` or `*.qdimacs` file can be used for running benchmarks.
 
-The following bash scripts may be used to download a testset:
+The following bash scripts may be used to download a test set:
 * [qcir non-prenex testset](https://phlo.github.io/qbf4j/files/dl-qcir-non-prenex.sh)  ([archive](https://phlo.github.io/qbf4j/files/qcir-non-prenex.tar.xz)) *default*
 * [qbfeval'17 testset](https://phlo.github.io/qbf4j/files/dl-qbfeval17.sh)
 
