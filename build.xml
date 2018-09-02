@@ -57,6 +57,8 @@
 
   <!-- distribution -->
 
+  <property name="dist.name" value="${ant.project.name}-${version}"/>
+
   <target name="dist" depends="compile,doc">
     <mkdir dir="${dist}"/>
 
@@ -67,14 +69,14 @@
       </manifest>
     </jar>
 
-    <jar jarfile="${dist}/${ant.project.name}-${version}.jar"
+    <jar jarfile="${dist}/${dist.name}.jar"
       basedir="${bin.main}"
       excludes="main/*"/>
 
-    <jar jarfile="${dist}/${ant.project.name}-${version}-sources.jar"
+    <jar jarfile="${dist}/${dist.name}-sources.jar"
       basedir="${src.main.java}"/>
 
-    <jar jarfile="${dist}/${ant.project.name}-${version}-javadoc.jar"
+    <jar jarfile="${dist}/${dist.name}-javadoc.jar"
       basedir="${doc}"/>
   </target>
 
@@ -151,7 +153,7 @@
   <target name="benchmark" depends="download-jmh,compile-benchmark,instrumentation">
     <mkdir dir="${dist}"/>
 
-    <jar jarfile="${dist}/${ant.project.name}-${version}-benchmark.jar"
+    <jar jarfile="${dist}/${dist.name}-benchmark.jar"
       basedir="${bin.benchmark}">
       <manifest>
         <attribute name="Main-Class" value="org.openjdk.jmh.Main"/>
@@ -163,6 +165,8 @@
     </jar>
   </target>
 
+  <!-- benchmarks (tree size) -->
+
   <target name="instrumentation" depends="init,compile-benchmark">
     <jar destfile="${lib}/QBFSizeAgent.jar">
       <fileset dir="${bin.benchmark}" includes="**/QBFSizeAgent.class"/>
@@ -172,6 +176,8 @@
       </manifest>
     </jar>
   </target>
+
+  <!-- cleanup -->
 
   <target name="clean">
     <delete dir="${bin}"/>
