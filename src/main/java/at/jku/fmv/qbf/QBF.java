@@ -767,60 +767,6 @@ public abstract class QBF {
 		return hashCode() == o.hashCode();
 	}
 
-//	public boolean equals(Object o) {
-//		if (this == o) return true;
-//		if (!(o instanceof QBF)) return false;
-//
-//		final QBF other = (QBF) o;
-//
-//		Function<True, Boolean> noTrue = x -> false;
-//		Function<False, Boolean> noFalse = x -> false;
-//		Function<Literal, Boolean> noLiteral = x -> false;
-//		Function<Not, Boolean> noNot = x -> false;
-//		Function<And, Boolean> noAnd = x -> false;
-//		Function<Or, Boolean> noOr = x -> false;
-//		Function<ForAll, Boolean> noForall = x -> false;
-//		Function<Exists, Boolean> noExists = x -> false;
-//
-//		return this.apply(
-//			(True t) -> t == True,
-//			(False f) -> f == False,
-//			(Literal lit1) ->
-//				other.apply(
-//					noTrue, noFalse,
-//					(Literal lit2) -> lit1.variable.equals(lit2.variable),
-//					noNot, noAnd, noOr, noForall, noExists),
-//			(Not not1) ->
-//				other.apply(
-//					noTrue, noFalse, noLiteral,
-//					(Not not2) -> not1.subformula.equals(not2.subformula),
-//					noAnd, noOr, noForall, noExists),
-//			(And and1) ->
-//				other.apply(
-//					noTrue, noFalse, noLiteral, noNot,
-//					(And and2) -> and1.subformulas.equals(and2.subformulas),
-//					noOr, noForall, noExists),
-//			(Or or1) ->
-//				other.apply(
-//					noTrue, noFalse, noLiteral, noNot, noAnd,
-//					(Or or2) -> or1.subformulas.equals(or2.subformulas),
-//					noForall, noExists),
-//			(ForAll forall1) ->
-//				other.apply(
-//					noTrue, noFalse, noLiteral, noNot, noAnd, noOr,
-//					(ForAll forall2) ->
-//						forall1.variables.equals(forall2.variables) &&
-//						forall1.subformula.equals(forall2.subformula),
-//					noExists),
-//			(Exists exists1) ->
-//				other.apply(
-//					noTrue, noFalse, noLiteral, noNot, noAnd, noOr, noForall,
-//					(Exists exists2) ->
-//						exists1.variables.equals(exists2.variables) &&
-//						exists1.subformula.equals(exists2.subformula))
-//		);
-//	}
-
 	/**
 	 * Tree traversal order.
 	 *
@@ -921,13 +867,9 @@ public abstract class QBF {
 			(Not not) ->
 				not.subformula.streamBoundVariables(),
 			(And and) ->
-				and.subformulas.stream()
-					.parallel()
-					.flatMap(QBF::streamBoundVariables),
+				and.subformulas.stream().flatMap(QBF::streamBoundVariables),
 			(Or or) ->
-				or.subformulas.stream()
-					.parallel()
-					.flatMap(QBF::streamBoundVariables),
+				or.subformulas.stream().flatMap(QBF::streamBoundVariables),
 			(ForAll forall) ->
 				Stream.concat(
 					forall.variables.stream(),
@@ -952,18 +894,17 @@ public abstract class QBF {
 			(Not not) -> Stream.empty(),
 			(And and) -> Stream.empty(),
 			(Or or) -> Stream.empty(),
-			(ForAll forall) -> Stream.concat(
-				Stream.of(forall),
-				forall.subformula.streamPrefix()),
-			(Exists exists) -> Stream.concat(
-				Stream.of(exists),
-				exists.subformula.streamPrefix())
+			(ForAll forall) ->
+				Stream.concat(
+					Stream.of(forall),
+					forall.subformula.streamPrefix()),
+			(Exists exists) ->
+				Stream.concat(
+					Stream.of(exists),
+					exists.subformula.streamPrefix())
 		);
 	}
 
-//	public List<QBF> getPrefix() { return streamPrefix().collect(Collectors.toList()); }
-
-	// qpath = head node of qpath prefix (get full path with streamPrefix)
 	/**
 	 * Streams this formula's q-paths.
 	 * <p>

@@ -658,12 +658,6 @@ public class QBFTest {
 		QBF forall = new Not(new ForAll(and, x1, x2));
 		QBF exists = new Not(new Exists(forall, x3));
 
-//		System.out.println(var.toString() + " == " + var.toNNF().toString());
-//		System.out.println(and.toString() + " == " + and.toNNF().toString());
-//		System.out.println(or.toString() + " == " + or.toNNF().toString());
-//		System.out.println(forall.toString() + " == " + forall.toNNF().toString());
-//		System.out.println(exists.toString() + " == " + exists.toNNF().toString());
-
 		assertEquals(var.toNNF(), new Not(new Variable(x1)));
 		assertEquals(and.toNNF(), new Or(new Not(new Variable(x1)), new Not(new Variable(x2)), QBF.False));
 		assertEquals(or.toNNF(), new And(new Variable(x1), new Variable(x2), QBF.True));

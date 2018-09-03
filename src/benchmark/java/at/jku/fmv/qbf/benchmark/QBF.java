@@ -24,23 +24,8 @@ public class QBF extends Benchmarks {
 	}
 
 	@Benchmark
-	public void streamParallel(Variables v, Blackhole hole) {
-		v.formula.stream(Traverse.PostOrder)
-			.parallel()
-			.forEach(o -> hole.consume(o));
-	}
-
-	@Benchmark
 	public void streamVariables(Variables v, Blackhole hole) {
 		v.formula.streamVariables()
-			.forEach(o -> hole.consume(o));
-	}
-
-	@Benchmark
-	public void streamVariablesParallel(Variables v, Blackhole hole) {
-		v.formula.streamVariables()
-			.unordered()
-			.parallel()
 			.forEach(o -> hole.consume(o));
 	}
 
@@ -51,44 +36,14 @@ public class QBF extends Benchmarks {
 	}
 
 	@Benchmark
-	public void streamBoundVariablesParallel(Variables v, Blackhole hole) {
-		v.formula.streamBoundVariables()
-			.unordered()
-			.parallel()
-			.forEach(o -> hole.consume(o));
-	}
-
-	@Benchmark
 	public void streamFreeVariables(Variables v, Blackhole hole) {
 		v.formula.streamBoundVariables()
 			.forEach(o -> hole.consume(o));
 	}
 
 	@Benchmark
-	public void streamFreeVariablesParallel(Variables v, Blackhole hole) {
-		v.formula.streamFreeVariables()
-			.parallel()
-			.forEach(o -> hole.consume(o));
-	}
-
-	@Benchmark
 	public void streamQPaths(Variables v, Blackhole hole) {
 		v.formula.streamQPaths()
-			.forEach(o -> hole.consume(o));
-	}
-
-	@Benchmark
-	public void streamQPathsParallel(Variables v, Blackhole hole) {
-		v.formula.streamQPaths()
-			.parallel()
-			.forEach(o -> hole.consume(o));
-	}
-
-	@Benchmark
-	public void streamQPathsParallelUnordered(Variables v, Blackhole hole) {
-		v.formula.streamQPaths()
-			.unordered()
-			.parallel()
 			.forEach(o -> hole.consume(o));
 	}
 
