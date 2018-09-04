@@ -168,7 +168,7 @@
   <!-- benchmarks (tree size) -->
 
   <target name="instrumentation" depends="init,compile-benchmark">
-    <jar destfile="${lib}/QBFSizeAgent.jar">
+    <jar destfile="${dist}/${dist.name}-QBFSizeAgent.jar">
       <fileset dir="${bin.benchmark}" includes="**/QBFSizeAgent.class"/>
       <manifest>
         <attribute name="Premain-Class" value="at.jku.fmv.qbf.benchmark.util.QBFSizeAgent"/>

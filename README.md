@@ -9,9 +9,12 @@
 
 ## Features
 
+* Java 8 [Stream](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html) support
+* structural pattern matching using [QBF::accept](https://phlo.github.io/qbf4j/at/jku/fmv/qbf/QBF.html#accept-java.util.function.Consumer-java.util.function.Consumer-java.util.function.Consumer-java.util.function.Consumer-java.util.function.Consumer-java.util.function.Consumer-java.util.function.Consumer-java.util.function.Consumer-) and [QBF::apply](https://phlo.github.io/qbf4j/at/jku/fmv/qbf/QBF.html#apply-java.util.function.Function-java.util.function.Function-java.util.function.Function-java.util.function.Function-java.util.function.Function-java.util.function.Function-java.util.function.Function-java.util.function.Function-) (Church encoding)
 * reading/writing of [QCIR-G14](http://qbf.satisfiability.org/gallery/qcir-gallery14.pdf) and [QDIAMCS](http://www.qbflib.org/qdimacs.html) files
 * transformation into
   * [cleansed form](https://phlo.github.io/qbf4j/at/jku/fmv/qbf/QBF.html#cleanse--)
+  * [negation normal form](https://phlo.github.io/qbf4j/at/jku/fmv/qbf/QBF.html#toNNF--)
   * [prenex normal form](https://phlo.github.io/qbf4j/at/jku/fmv/qbf/pnf/PrenexingStrategy.html#apply-at.jku.fmv.qbf.QBF-)
   * [conjunctive normal form](https://phlo.github.io/qbf4j/at/jku/fmv/qbf/pcnf/CNFEncoder.html#encode-at.jku.fmv.qbf.QBF-)
 
@@ -66,33 +69,39 @@ After building the benchmarks using `ant benchmark`, see `java -jar dist/qbf4j-V
 
 Listing all available benchmarks is done using:
 ```
-java -jar dist/qbf4j-VERSION-benchmark.jar -l | sed 's/at.*benchmark.//g'
+java -jar dist/qbf4j-VERSION-benchmark.jar -l
 ```
 
-For running a preconfigured version of a specific benchmark use:
+For running a preconfigured version of a specific benchmark, use:
 ```
-java -cp dist/qbf4j-VERSION-benchmark.jar <benchmark>
+java -cp dist/qbf4j-VERSION-benchmark.jar <class>.<method>
 ```
 
-To show an overview of a benchmark's result in markdown format, a simple python script is included at `src/benchmark/python/printBenchmark.py`.
+To show an overview of a benchmark's result in markdown format, a simple python script is included at:
+```
+src/benchmark/python/printBenchmark.py
+```
 
 ### Tree Size
 
 To measure the formula tree size of the given test set run:
 ```
-java -cp dist/qbf4j-VERSION-benchmark.jar -javaagent:lib/QBFSizeAgent.jar QBF.MemoryConsumption
+java -cp dist/qbf4j-VERSION-benchmark.jar -javaagent:dist/qbf4j-VERSION-QBFSizeAgent.jar QBF.MemoryConsumption
 ```
 
 ### Test Sets
 
 Any `*.qcir` or `*.qdimacs` file can be used for running benchmarks.
 
-The following bash scripts may be used to download a test set:
-* [qcir non-prenex testset](https://phlo.github.io/qbf4j/files/dl-qcir-non-prenex.sh)  ([archive](https://phlo.github.io/qbf4j/files/qcir-non-prenex.tar.xz)) *default*
-* [qbfeval'17 testset](https://phlo.github.io/qbf4j/files/dl-qbfeval17.sh)
+The following bash scripts may be used to download and extract a test set:
+* [qcir non-prenex test set](https://phlo.github.io/qbf4j/files/dl-qcir-non-prenex.sh)  ([archive](https://phlo.github.io/qbf4j/files/qcir-non-prenex.tar.xz)) *default*
+* [qbfeval'17 test set](https://phlo.github.io/qbf4j/files/dl-qbfeval17.sh) ([archive](http://www.qbflib.org/eval17.zip))
 
 ### Configuration
 
-A properties file for customizing certain benchmark parameters can be found at `src/benchmark/resources/benchmark.properties`.
+A properties file for customizing certain benchmark parameters can be found at:
+```
+src/benchmark/resources/benchmark.properties
+```
 
 After changing the properties file, either run `ant benchmark` to rebuild the `jar` file or include it in the classpath when running a benchmark.
