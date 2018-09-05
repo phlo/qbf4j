@@ -101,7 +101,7 @@
       verbose="true" usetimestamp="true" skipexisting="true"/>
   </target>
 
-  <target name="test" depends="compile,compile-test,download-junit">
+  <target name="test" depends="download-junit,compile,compile-test">
     <java jar="${junit.jar}" fork="true">
       <arg line="-cp"/>
       <arg path="${bin.main}:${bin.test}"/>
