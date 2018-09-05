@@ -61,7 +61,7 @@
   <target name="dist" depends="compile,doc">
     <mkdir dir="${dist}"/>
 
-    <jar jarfile="${dist}/qcir2pnf.jar"
+    <jar jarfile="${dist}/qcir2pnf-${version}.jar"
       basedir="${bin.main}">
       <manifest>
         <attribute name="Main-Class" value="main.qcir2pnf"/>

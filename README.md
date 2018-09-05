@@ -34,7 +34,7 @@ Build from source using `ant dist` and include `dist/qbf4j-VERSION.jar` in the c
 Converts a given [QCIR-G14](http://qbf.satisfiability.org/gallery/qcir-gallery14.pdf) formula into [prenex normal form](https://en.wikipedia.org/wiki/Prenex_normal_form).
 
 ```
-> $ java -jar dist/qcir2pnf.jar
+> $ java -jar dist/qcir2pnf-VERSION.jar
 
 Usage: qcir2pnf [OPTION]... <input-file> <output-file>
 
